@@ -17,13 +17,19 @@ function initConfig() {
     const defaultConfig = {
       npmRegistry: 'https://registry.npmmirror.com',
       workDir: '',
+      webPort: 4096,
       nodejsExtracted: false,
       opencodeInstalled: false
     };
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2));
     return defaultConfig;
   }
-  return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+  const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+  // 兼容旧配置，添加默认端口
+  if (!config.webPort) {
+    config.webPort = 4096;
+  }
+  return config;
 }
 
 function saveConfig(config) {
@@ -148,7 +154,7 @@ export PATH="${nodeBinPath}:$PATH"
 `;
     fs.writeFileSync(tmpScript, scriptContent, { mode: 0o755 });
     
-    const command = `osascript -e 'tell application "Terminal" to do script "${tmpScript}"'`;
+    const command = `osascript -e 'tell application "Terminal" to do script "${tmpScript}"' -e 'tell application "Terminal" to activate'`;
     require('child_process').exec(command, (error) => {
       if (error) {
         console.error('启动 TUI 失败:', error);
@@ -158,13 +164,24 @@ export PATH="${nodeBinPath}:$PATH"
         try { fs.unlinkSync(tmpScript); } catch (e) {}
       }, 5000);
     });
+    
+    // 将启动器窗口最小化
+    setTimeout(() => {
+      if (mainWindow) mainWindow.minimize();
+    }, 500);
   } else if (process.platform === 'win32') {
-    const command = `start cmd /k "cd /d "${workDir}" && set PATH=${path.join(NODEJS_PATH)};%PATH% && "${opencodePath}""`;
+    // Windows: 使用 start 命令，/MAX 参数最大化窗口
+    const command = `start "OpenCode TUI" /MAX cmd /k "cd /d "${workDir}" && set PATH=${path.join(NODEJS_PATH)};%PATH% && "${opencodePath}""`;
     require('child_process').exec(command, (error) => {
       if (error) {
         console.error('启动 TUI 失败:', error);
       }
     });
+    
+    // 将启动器窗口最小化
+    setTimeout(() => {
+      if (mainWindow) mainWindow.minimize();
+    }, 500);
   }
 }
 
@@ -183,7 +200,7 @@ export PATH="${nodeBinPath}:$PATH"
 `;
     fs.writeFileSync(tmpScript, scriptContent, { mode: 0o755 });
     
-    const command = `osascript -e 'tell application "Terminal" to do script "${tmpScript}"'`;
+    const command = `osascript -e 'tell application "Terminal" to do script "${tmpScript}"' -e 'tell application "Terminal" to activate'`;
     require('child_process').exec(command, (error) => {
       if (error) {
         console.error('启动 Web 失败:', error);
@@ -193,14 +210,25 @@ export PATH="${nodeBinPath}:$PATH"
         try { fs.unlinkSync(tmpScript); } catch (e) {}
       }, 5000);
     });
+    
+    // 将启动器窗口最小化
+    setTimeout(() => {
+      if (mainWindow) mainWindow.minimize();
+    }, 500);
     // OpenCode web 会自动打开浏览器，不需要手动打开
   } else if (process.platform === 'win32') {
-    const command = `start cmd /k "cd /d \"${workDir}\" && set PATH=${path.join(NODEJS_PATH)};%PATH% && \"${opencodePath}\" web --port ${port} --hostname 127.0.0.1"`;
+    // Windows: 使用 start 命令，/MAX 参数最大化窗口
+    const command = `start "OpenCode Web" /MAX cmd /k "cd /d \"${workDir}\" && set PATH=${path.join(NODEJS_PATH)};%PATH% && \"${opencodePath}\" web --port ${port} --hostname 127.0.0.1"`;
     require('child_process').exec(command, (error) => {
       if (error) {
         console.error('启动 Web 失败:', error);
       }
     });
+    
+    // 将启动器窗口最小化
+    setTimeout(() => {
+      if (mainWindow) mainWindow.minimize();
+    }, 500);
     // OpenCode web 会自动打开浏览器，不需要手动打开
   }
 }

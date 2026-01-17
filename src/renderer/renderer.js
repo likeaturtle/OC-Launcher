@@ -33,6 +33,11 @@ async function initialize() {
   if (config.npmRegistry) {
     document.getElementById('npm-registry-input').value = config.npmRegistry;
   }
+  
+  // 恢复 Web 端口
+  if (config.webPort) {
+    document.getElementById('web-port').value = config.webPort;
+  }
 }
 
 // 更新状态显示
@@ -99,11 +104,14 @@ document.getElementById('launch-tui-btn').addEventListener('click', async () => 
 // 启动 Web
 document.getElementById('launch-web-btn').addEventListener('click', async () => {
   const port = parseInt(document.getElementById('web-port').value) || 4096;
+  
+  // 保存端口配置
+  config.webPort = port;
+  await window.electronAPI.saveConfig(config);
+  
   const result = await window.electronAPI.launchWeb({ workDir: currentWorkDir, port });
   if (result.success) {
     showNotification(`Web 服务已启动，端口: ${port}`, 'success');
-    // 显示 Web 选项
-    document.getElementById('web-options').style.display = 'block';
   } else {
     showNotification('启动失败: ' + result.error, 'error');
   }
