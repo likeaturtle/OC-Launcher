@@ -24,14 +24,74 @@ npm install
 npm run dev
 ```
 
-### 构建应用
+### 打包应用
+
+#### macOS 打包
+
+在 macOS 系统上打包：
 
 ```bash
-# 构建（不打包）
-npm run build
+# 安装依赖（首次）
+npm install
 
-# 打包发布版本
+# 打包当前系统架构（自动检测）
 npm run dist
+
+# 指定架构打包
+npm run dist:mac-arm64  # Apple Silicon (M1/M2/M3)
+npm run dist:mac-x64    # Intel
+
+# 打包所有架构（arm64 + x64）
+npm run dist:mac-all
+
+# 输出文件：dist/OpenCode Launcher-1.0.0-arm64.dmg（Apple Silicon）
+#         或 dist/OpenCode Launcher-1.0.0-x64.dmg（Intel）
+```
+
+**注意：**
+- macOS 打包会自动选择对应架构的 Node.js（arm64 或 x64）
+- 使用 `dist:mac-arm64` 或 `dist:mac-x64` 可明确指定目标架构
+- 打包前会自动清理生产环境配置，确保打包后的应用是全新状态
+- 开发环境配置（`opencode-launcher-dev`）不受影响
+- 未签名的应用首次运行需在系统偏好设置中允许
+
+#### Windows 打包
+
+在 Windows 系统上打包：
+
+```bash
+# 安装依赖（首次）
+npm install
+
+# 打包当前系统架构（自动检测）
+npm run dist
+
+# 指定架构打包
+npm run dist:win-x64    # 64位 Windows
+npm run dist:win-x86    # 32位 Windows
+npm run dist:win-arm64  # ARM64 Windows
+
+# 打包所有架构（x64 + x86 + arm64）
+npm run dist:win-all
+
+# 输出文件：dist/OpenCode Launcher Setup 1.0.0.exe
+```
+
+**注意：**
+- Windows 打包会根据系统架构选择对应的 Node.js（x64、x86 或 arm64）
+- 使用 `dist:win-*` 命令可明确指定目标架构
+- 打包前需手动清理：`%APPDATA%\opencode-launcher`（如需要）
+
+#### 跨平台打包
+
+如需在 macOS 上打包 Windows 版本，或反之，需要额外配置：
+
+```bash
+# macOS 打包 Windows 版本（需要 wine）
+npm run dist -- --win
+
+# Windows 打包 macOS 版本（不推荐）
+npm run dist -- --mac
 ```
 
 ## 使用说明

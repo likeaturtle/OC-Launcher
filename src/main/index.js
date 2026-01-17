@@ -7,6 +7,14 @@ const tar = require('tar');
 const AdmZip = require('adm-zip');
 
 let mainWindow;
+
+// 区分开发和生产环境的 userData 路径
+if (!app.isPackaged) {
+  // 开发环境：使用 opencode-launcher-dev
+  app.setPath('userData', path.join(app.getPath('appData'), 'opencode-launcher-dev'));
+}
+// 生产环境使用默认的 opencode-launcher
+
 const CONFIG_PATH = path.join(app.getPath('userData'), 'config.json');
 const NODEJS_PATH = path.join(app.getPath('userData'), 'nodejs');
 const OPENCODE_PATH = path.join(app.getPath('userData'), 'opencode');
@@ -55,24 +63,51 @@ function getNodePackageName() {
 // 解压 Node.js
 async function extractNodejs(packagePath) {
   return new Promise((resolve, reject) => {
+    console.log('[解压] 开始解压:', packagePath);
     const ext = path.extname(packagePath);
+    console.log('[解压] 文件扩展名:', ext);
     
     try {
       if (!fs.existsSync(NODEJS_PATH)) {
         fs.mkdirSync(NODEJS_PATH, { recursive: true });
+        console.log('[解压] 创建目录:', NODEJS_PATH);
       }
       
-      if (ext === '.gz') {
+      // 判断文件类型：优先根据扩展名，打包后无扩展名则根据平台判断
+      const isZip = ext === '.zip' || (ext === '' && process.platform === 'win32');
+      const isTarGz = ext === '.gz' || (ext === '' && process.platform === 'darwin');
+      
+      if (isTarGz) {
         // 解压 tar.gz
+        console.log('[解压] 使用 tar 解压');
         tar.x({
           file: packagePath,
           cwd: NODEJS_PATH,
           strip: 1 // 去掉顶层目录
         }).then(() => {
+          // 确保 bin 目录下的文件有执行权限 (macOS/Linux)
+          if (process.platform !== 'win32') {
+            const binPath = path.join(NODEJS_PATH, 'bin');
+            if (fs.existsSync(binPath)) {
+              const files = fs.readdirSync(binPath);
+              files.forEach(file => {
+                try {
+                  fs.chmodSync(path.join(binPath, file), '755');
+                } catch (e) {
+                  console.error(`[解压] 赋予权限失败: ${file}`, e);
+                }
+              });
+            }
+          }
+          console.log('[解压] tar 解压完成');
           resolve();
-        }).catch(reject);
-      } else if (ext === '.zip') {
+        }).catch(err => {
+          console.error('[解压] tar 解压失败:', err);
+          reject(err);
+        });
+      } else if (isZip) {
         // 解压 zip
+        console.log('[解压] 使用 zip 解压');
         const zip = new AdmZip(packagePath);
         zip.extractAllTo(NODEJS_PATH, true);
         
@@ -89,25 +124,90 @@ async function extractNodejs(packagePath) {
           });
           fs.rmdirSync(srcDir);
         }
+        console.log('[解压] zip 解压完成');
         resolve();
+      } else {
+        const error = new Error(`不支持的文件格式: ${ext}`);
+        console.error('[解压] 错误:', error.message);
+        reject(error);
       }
     } catch (error) {
+      console.error('[解压] 异常:', error);
       reject(error);
     }
   });
 }
 
+// 获取独立 Node.js 的执行路径
+function getNodeExecutionPaths() {
+  const nodePath = path.join(NODEJS_PATH, process.platform === 'win32' ? 'node.exe' : 'bin/node');
+  const npmCliPath = process.platform === 'win32' 
+    ? path.join(NODEJS_PATH, 'node_modules/npm/bin/npm-cli.js')
+    : path.join(NODEJS_PATH, 'lib/node_modules/npm/bin/npm-cli.js');
+  const nodeBinPath = process.platform === 'win32' ? NODEJS_PATH : path.join(NODEJS_PATH, 'bin');
+  
+  return { nodePath, npmCliPath, nodeBinPath };
+}
+
+// 确保 Node.js 相关文件有执行权限
+function ensureNodejsPermissions() {
+  if (process.platform === 'win32') return;
+  
+  const { nodeBinPath } = getNodeExecutionPaths();
+  if (fs.existsSync(nodeBinPath)) {
+    const files = fs.readdirSync(nodeBinPath);
+    files.forEach(file => {
+      try {
+        const filePath = path.join(nodeBinPath, file);
+        const stats = fs.statSync(filePath);
+        if (!(stats.mode & 0o111)) {
+          fs.chmodSync(filePath, '755');
+          console.log(`[权限] 修复权限: ${file}`);
+        }
+      } catch (e) {
+        console.error(`[权限] 修复权限失败: ${file}`, e);
+      }
+    });
+  }
+}
+
 // 配置 npm 源
 function configureNpmRegistry(registry) {
   return new Promise((resolve, reject) => {
-    const npmPath = path.join(NODEJS_PATH, process.platform === 'win32' ? 'npm.cmd' : 'bin/npm');
-    const child = spawn(npmPath, ['config', 'set', 'registry', registry], {
-      env: { ...process.env, PREFIX: NODEJS_PATH }
+    ensureNodejsPermissions();
+    const { nodePath, npmCliPath, nodeBinPath } = getNodeExecutionPaths();
+    
+    if (!fs.existsSync(nodePath)) {
+      return reject(new Error(`找不到 Node.js 执行文件: ${nodePath}`));
+    }
+    if (!fs.existsSync(npmCliPath)) {
+      return reject(new Error(`找不到 npm-cli.js: ${npmCliPath}`));
+    }
+
+    // 设置环境变量
+    const env = { ...process.env, PREFIX: NODEJS_PATH };
+    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+    const currentPath = env[pathKey] || env.PATH || env.Path || '';
+    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
+    // 确保 PATH 和 Path 同时存在（兼容性）
+    env.PATH = env[pathKey];
+    env.Path = env[pathKey];
+    
+    // 直接使用 node 运行 npm-cli.js，绕过可能存在问题的 npm 脚本
+    const child = spawn(nodePath, [npmCliPath, 'config', 'set', 'registry', registry], { env });
+    
+    let stderr = '';
+    child.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    child.on('error', (err) => {
+      reject(err);
     });
     
     child.on('close', (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`npm config failed with code ${code}`));
+      else reject(new Error(`npm config failed with code ${code}. ${stderr}`));
     });
   });
 }
@@ -115,9 +215,23 @@ function configureNpmRegistry(registry) {
 // 安装 OpenCode
 function installOpenCode() {
   return new Promise((resolve, reject) => {
-    const npmPath = path.join(NODEJS_PATH, process.platform === 'win32' ? 'npm.cmd' : 'bin/npm');
-    const child = spawn(npmPath, ['install', '-g', 'opencode-ai', '--prefix', OPENCODE_PATH], {
-      env: { ...process.env }
+    ensureNodejsPermissions();
+    const { nodePath, npmCliPath, nodeBinPath } = getNodeExecutionPaths();
+
+    // 设置环境变量
+    const env = { ...process.env };
+    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+    const currentPath = env[pathKey] || env.PATH || env.Path || '';
+    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
+    env.PATH = env[pathKey];
+    env.Path = env[pathKey];
+    
+    const child = spawn(nodePath, [npmCliPath, 'install', '-g', 'opencode-ai', '--prefix', OPENCODE_PATH], {
+      env
+    });
+    
+    child.on('error', (err) => {
+      reject(err);
     });
     
     let output = '';
@@ -298,7 +412,8 @@ ipcMain.handle('extract-nodejs', async () => {
     // 从资源目录或打包后的位置获取
     let packagePath;
     if (app.isPackaged) {
-      packagePath = path.join(process.resourcesPath, 'nodejs_package', packageName);
+      // 打包后，nodejs_package 直接是压缩包文件，不是目录
+      packagePath = path.join(process.resourcesPath, 'nodejs_package');
     } else {
       packagePath = path.join(__dirname, '../../nodejs_package', packageName);
     }

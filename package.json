@@ -7,7 +7,16 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "build": "electron-builder --dir",
-    "dist": "electron-builder"
+    "clean:userdata": "rm -rf ~/Library/Application\\ Support/opencode-launcher",
+    "predist": "npm run clean:userdata",
+    "dist": "electron-builder",
+    "dist:mac-arm64": "electron-builder --mac --arm64",
+    "dist:mac-x64": "electron-builder --mac --x64",
+    "dist:mac-all": "electron-builder --mac --arm64 --x64",
+    "dist:win-x64": "electron-builder --win --x64",
+    "dist:win-x86": "electron-builder --win --ia32",
+    "dist:win-arm64": "electron-builder --win --arm64",
+    "dist:win-all": "electron-builder --win --x64 --ia32 --arm64"
   },
   "keywords": ["opencode", "launcher", "electron"],
   "author": "",
@@ -30,34 +39,34 @@
       "src/**/*",
       "package.json"
     ],
-    "extraResources": [
-      {
-        "from": "nodejs_package",
-        "to": "nodejs_package",
-        "filter": ["**/*"]
-      }
-    ],
     "fileAssociations": [],
     "protocols": [],
     "mac": {
       "target": ["dmg"],
-      "icon": "assets/icon.icns",
-      "category": "public.app-category.developer-tools"
+      "category": "public.app-category.developer-tools",
+      "extraResources": [
+        {
+          "from": "nodejs_package/node-v22.22.0-darwin-${arch}.tar.gz",
+          "to": "nodejs_package"
+        }
+      ]
     },
     "win": {
       "target": ["nsis"],
-      "icon": "assets/icon.ico"
+      "extraResources": [
+        {
+          "from": "nodejs_package/node-v22.22.0-win-${arch}.zip",
+          "to": "nodejs_package"
+        }
+      ]
     },
     "linux": {
       "target": ["AppImage"],
-      "icon": "assets/icon.png",
       "category": "Development"
     },
     "compression": "maximum",
     "asar": true,
-    "asarUnpack": [
-      "nodejs_package/**/*"
-    ],
+    "asarUnpack": [],
     "npmRebuild": false,
     "nodeGypRebuild": false
   }
