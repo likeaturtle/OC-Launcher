@@ -1,32 +1,162 @@
 # OpenCode Launcher
 
-OpenCode Launcher 是一个基于 Electron 的独立启动器，提供隔离的 Node.js 环境来运行 OpenCode AI 编程助手。
+<p align="center">
+  <strong>基于 Electron 的 OpenCode AI 独立环境管理器</strong>
+</p>
 
-## 功能特性
+<p align="center">
+  <img src="https://img.shields.io/badge/Electron-28.0-blue" alt="Electron">
+  <img src="https://img.shields.io/badge/Node.js-22.22.0-green" alt="Node.js">
+  <img src="https://img.shields.io/badge/License-AGPL%20v3-blue" alt="License">
+</p>
 
-- ✅ **独立 Node.js 环境** - 自动检测系统并解压对应的 Node.js 版本，完全隔离不污染全局环境
-- ✅ **npm 源配置** - 默认使用淘宝镜像源，支持自定义 npm 源
-- ✅ **一键安装 OpenCode** - 使用独立环境安装 opencode-ai
-- ✅ **工作目录管理** - 灵活选择 OpenCode 工作目录
-- ✅ **TUI 模式启动** - 在系统终端中启动 OpenCode TUI
-- ✅ **Web 模式启动** - 启动 OpenCode Web 服务并自动打开浏览器
-- 🚧 **配置可视化** - 预留 OpenCode 配置、MCP、Skills 可视化管理页面
+## 📖 项目简介
 
-## 快速开始
+OpenCode Launcher 是一个为 [OpenCode AI](https://github.com/openhands-ai/openhands) 打造的独立启动器，提供**完全隔离**的 Node.js 环境管理、图形化配置界面和一键启动功能。它解决了 OpenCode 需要手动配置 Node.js 环境、npm 源设置繁琐、命令行操作复杂等痛点。
+
+### 🎯 项目定位
+
+- **桌面应用程序**：基于 Electron 框架构建的跨平台桌面应用
+- **环境管理器**：为 OpenCode AI 提供独立、隔离的运行环境
+- **启动器**：图形化界面一键启动 TUI/Web 模式
+- **配置中心**：（预留）可视化管理 OpenCode 配置、MCP 服务器和 Skills
+
+### ✨ 核心创新点
+
+#### 1. **完全隔离的独立环境**
+- 内置 Node.js 22.22.0 独立运行时（支持 5 种系统架构）
+- 不依赖系统全局 Node.js，不污染系统环境
+- 所有环境数据存储在用户数据目录，开发/生产环境隔离
+- 卸载应用即可清理所有相关文件
+
+#### 2. **智能平台适配**
+- 自动检测操作系统和 CPU 架构（macOS ARM64/x64, Windows ARM64/x64/x86）
+- 自动选择对应的 Node.js 包并解压
+- 自动配置执行权限（Unix 系统）
+- 无需用户关心底层技术细节
+
+#### 3. **图形化配置流程**
+- 深色主题 UI，符合 OpenCode 设计风格
+- 3 步完成环境设置：解压 Node.js → 配置 npm 源 → 安装 OpenCode
+- 实时显示安装进度和日志
+- 状态可视化（环境状态、安装状态、npm 源）
+
+#### 4. **多模式启动**
+- **TUI 模式**：在系统终端中启动传统命令行界面，功能最完整
+- **Web 模式**：启动 Web 服务，支持浏览器访问（默认端口 4096，可自定义）
+- 自动最小化启动器窗口，不干扰工作流
+- 自动配置环境变量和工作目录
+
+#### 5. **国内优化**
+- 默认使用淘宝 npm 镜像源（https://registry.npmmirror.com）
+- 支持一键切换官方源或自定义源
+- 大幅提升国内用户安装速度
+
+#### 6. **可扩展架构**
+- 预留配置管理、MCP 服务器、Skills 配置页面
+- 采用 Electron IPC 通信，主进程和渲染进程分离
+- 安全沙箱设计（contextIsolation + preload script）
+
+## 🚀 功能特性
+
+### ✅ 已实现功能
+
+- **独立 Node.js 环境**
+  - 自动检测系统架构并解压对应 Node.js 版本
+  - 完全隔离，不污染全局环境
+  - 存储路径：`~/Library/Application Support/opencode-launcher/nodejs/`（macOS）
+
+- **npm 源管理**
+  - 默认淘宝镜像源，支持快速切换官方源
+  - 支持自定义 npm 源地址
+  - 仅修改独立环境配置，不影响系统全局 npm
+
+- **OpenCode 安装**
+  - 一键安装 opencode-ai 到独立环境
+  - 实时显示安装进度和详细日志
+  - 安装路径：`~/Library/Application Support/opencode-launcher/opencode/`
+
+- **工作目录管理**
+  - 可视化选择项目工作目录
+  - 自动保存并恢复上次选择的目录
+
+- **双模式启动**
+  - **TUI 模式**：在系统终端打开 OpenCode 命令行界面
+  - **Web 模式**：启动 Web 服务并在浏览器访问
+  - 自动配置 PATH 环境变量
+  - 启动后自动最小化启动器窗口
+
+- **状态监控**
+  - 实时显示 Node.js 环境状态
+  - 实时显示 OpenCode 安装状态
+  - 实时显示当前 npm 源配置
+
+- **跨平台打包**
+  - 支持 macOS（ARM64、x64）
+  - 支持 Windows（ARM64、x64、x86）
+  - 预留 Linux 支持
+  - 多架构打包脚本
+
+### 🚧 预留功能（待开发）
+
+- **OpenCode 配置管理**：可视化编辑 `~/.opencode/config.json`
+- **MCP 服务器管理**：添加/删除 MCP 服务器，OAuth 认证
+- **Skills 配置**：安装/卸载 Skills，配置参数
+
+# 🎬 快速开始
+
+### 用户使用（首次运行）
+
+1. **下载并安装**
+   - 从 Releases 下载对应平台的安装包
+   - macOS: 双击 `.dmg` 文件，拖拽到 Applications
+   - Windows: 运行 `.exe` 安装程序
+
+2. **环境设置**（首次运行约 5-10 分钟）
+   - 启动应用，点击左侧 **"环境设置"**
+   - 点击 **"解压 Node.js"**（1-2 分钟）
+   - 点击 **"设置 npm 源"**（几秒钟）
+   - 点击 **"安装 OpenCode"**（3-5 分钟）
+
+3. **日常使用**
+   - 回到首页，选择工作目录
+   - 点击 **"启动 TUI"** 或 **"启动 Web"**
+   - 开始使用 OpenCode AI
 
 ### 开发模式
 
 ```bash
+# 克隆项目
+git clone <repository-url>
+cd OC-Launcher
+
 # 安装依赖
 npm install
 
-# 启动开发模式
+# 启动开发模式（开发环境使用独立数据目录）
 npm run dev
+
+# 开发环境数据目录：
+# macOS: ~/Library/Application Support/opencode-launcher-dev
+# Windows: %APPDATA%/opencode-launcher-dev
 ```
 
-### 打包应用
+## 📦 打包方法
 
-#### macOS 打包
+### 准备工作
+
+**重要**：打包前需要准备 Node.js 独立包（约 30-50MB/个）
+
+1. 下载 Node.js 22.22.0 独立包：
+   - macOS ARM64: [node-v22.22.0-darwin-arm64.tar.gz](https://nodejs.org/dist/v22.22.0/)
+   - macOS x64: [node-v22.22.0-darwin-x64.tar.gz](https://nodejs.org/dist/v22.22.0/)
+   - Windows ARM64: [node-v22.22.0-win-arm64.zip](https://nodejs.org/dist/v22.22.0/)
+   - Windows x64: [node-v22.22.0-win-x64.zip](https://nodejs.org/dist/v22.22.0/)
+   - Windows x86: [node-v22.22.0-win-x86.zip](https://nodejs.org/dist/v22.22.0/)
+
+2. 将下载的包放到项目根目录的 `nodejs_package/` 文件夹中
+
+### macOS 打包
 
 在 macOS 系统上打包：
 
@@ -94,39 +224,227 @@ npm run dist -- --win
 npm run dist -- --mac
 ```
 
-## 使用说明
+## 📚 使用说明
 
-1. **首次运行** - 进入"环境设置"页面，依次：
-   - 解压 Node.js 环境
-   - 配置 npm 源（默认淘宝源）
-   - 安装 OpenCode
+### 首次运行设置
 
-2. **日常使用** - 在首页：
-   - 选择工作目录
-   - 点击"启动 TUI"或"启动 Web"
+#### 第一步：环境准备
 
-## 技术栈
+1. 启动 OpenCode Launcher
+2. 点击左侧菜单 **"环境设置"**
+3. 按照以下步骤操作：
 
-- Electron 28
-- Node.js 22.22.0（独立环境）
-- OpenCode AI
+**① 解压 Node.js 环境**
+- 点击 **"解压 Node.js"** 按钮
+- 应用会根据您的操作系统自动选择对应的 Node.js 版本
+- 等待解压完成（约 1-2 分钟）
+- 看到 "✓ Node.js 解压成功！" 后进入下一步
 
-## 目录结构
+**② 配置 npm 源**
+- 默认已填入淘宝镜像源：`https://registry.npmmirror.com`
+- 可选操作：
+  - 点击 **"官方源"** 快速切换到 npm 官方源
+  - 或手动输入自定义 npm 源地址
+- 点击 **"设置 npm 源"** 按钮
+- 看到 "✓ npm 源配置成功！" 后进入下一步
+
+**③ 安装 OpenCode**
+- 点击 **"安装 OpenCode"** 按钮
+- 安装过程会显示详细日志（约 3-5 分钟，视网络速度而定）
+- 看到 "✓ OpenCode 安装成功！" 后，环境设置完成
+
+#### 第二步：日常使用
+
+1. 回到 **"首页"**
+2. 点击 **"选择目录"** 选择您的项目工作目录
+3. 选择启动方式：
+   - **启动 TUI**：在系统终端中打开 OpenCode 命令行界面（推荐）
+   - **启动 Web**：启动 Web 服务并在浏览器中打开（默认端口 4096，可自定义）
+
+### 功能说明
+
+#### 主要功能
+
+- **独立环境**：Node.js 和 OpenCode 完全独立安装，不影响系统环境
+- **npm 源配置**：支持淘宝源、官方源或自定义源
+- **TUI 模式**：传统终端界面，功能最完整，适合命令行用户
+- **Web 模式**：浏览器访问，更适合远程使用或不熟悉命令行的用户
+- **工作目录持久化**：自动记住上次选择的工作目录
+- **状态监控**：实时显示环境配置状态
+
+### 常见问题
+
+**Q: 安装 OpenCode 失败怎么办？**
+
+A: 请检查：
+1. Node.js 是否已成功解压（首页状态显示"已配置 ✓"）
+2. npm 源是否配置正确（建议使用淘宝源）
+3. 网络连接是否正常
+4. 查看安装日志中的错误信息
+
+**Q: 启动 TUI 后没有反应？**
+
+A: TUI 会在系统终端中打开，请检查：
+1. 是否已选择工作目录
+2. 终端窗口是否被其他窗口遮挡
+3. macOS 用户检查是否授权终端权限
+
+**Q: Web 模式无法访问？**
+
+A: 请检查：
+1. 端口是否被占用（可在首页更改端口号）
+2. 等待 3-5 秒后再访问浏览器
+3. 查看终端中是否有错误信息
+4. 确认防火墙没有阻止连接
+
+**Q: 如何更新 OpenCode？**
+
+A: 在终端中运行：
+```bash
+# macOS
+~/Library/Application\ Support/opencode-launcher/nodejs/bin/npm update -g opencode-ai --prefix ~/Library/Application\ Support/opencode-launcher/opencode
+
+# Windows
+%APPDATA%\opencode-launcher\nodejs\npm update -g opencode-ai --prefix %APPDATA%\opencode-launcher\opencode
+```
+
+**Q: 如何完全卸载？**
+
+A: 
+1. 删除应用程序
+2. 删除用户数据目录：
+   - macOS: `~/Library/Application Support/opencode-launcher`
+   - Windows: `%APPDATA%\opencode-launcher`
+
+## 🛠️ 技术栈
+
+### 核心框架
+- **Electron 28.0**：跨平台桌面应用框架
+- **Node.js 22.22.0**：独立 JavaScript 运行时
+- **OpenCode AI**：AI 编程助手核心
+
+### 依赖库
+- **tar**：解压 `.tar.gz` 格式的 Node.js 包（macOS）
+- **adm-zip**：解压 `.zip` 格式的 Node.js 包（Windows）
+- **electron-builder**：应用打包工具
+
+### 架构设计
+- **主进程**（[index.js](file:///Users/fujd/Desktop/OC-Launcher/src/main/index.js)）
+  - 系统操作：文件 I/O、进程管理、环境配置
+  - Node.js 解压和权限管理
+  - npm 源配置和 OpenCode 安装
+  - TUI/Web 启动逻辑
+  
+- **预加载脚本**（[preload.js](file:///Users/fujd/Desktop/OC-Launcher/src/main/preload.js)）
+  - 安全桥接：contextBridge 暴露 API
+  - IPC 通信封装
+  
+- **渲染进程**（[renderer.js](file:///Users/fujd/Desktop/OC-Launcher/src/renderer/renderer.js)）
+  - UI 交互逻辑
+  - 页面切换和状态管理
+  - 安装进度实时显示
+
+### 安全机制
+- **contextIsolation**：隔离渲染进程和 Node.js 环境
+- **preload script**：安全暴露有限的 API
+- **nodeIntegration: false**：禁用渲染进程直接访问 Node.js
+
+## 📁 项目结构
 
 ```
 OC-Launcher/
 ├── src/
-│   ├── main/          # 主进程代码
-│   │   ├── index.js   # 主进程入口
-│   │   └── preload.js # 预加载脚本
-│   └── renderer/      # 渲染进程代码
-│       ├── index.html # 主界面
-│       ├── styles.css # 样式文件
-│       └── renderer.js # 渲染逻辑
-├── nodejs_package/    # Node.js 独立包
-└── package.json       # 项目配置
+│   ├── main/                    # 主进程（系统层）
+│   │   ├── index.js             # 主进程入口，核心业务逻辑
+│   │   └── preload.js           # 预加载脚本，安全桥接
+│   └── renderer/                # 渲染进程（UI 层）
+│       ├── index.html           # 主界面 HTML
+│       ├── styles.css           # OpenCode 风格样式
+│       └── renderer.js          # UI 交互逻辑
+├── nodejs_package/              # Node.js 独立包（需自行下载）
+│   ├── node-v22.22.0-darwin-arm64.tar.gz
+│   ├── node-v22.22.0-darwin-x64.tar.gz
+│   ├── node-v22.22.0-win-arm64.zip
+│   ├── node-v22.22.0-win-x64.zip
+│   └── node-v22.22.0-win-x86.zip
+├── dist/                        # 打包输出目录（自动生成）
+├── package.json                 # 项目配置和打包设置
+├── README.md                    # 项目说明文档（本文档）
+├── USAGE.md                     # 详细使用指南
+└── PROJECT_SUMMARY.md           # 项目总结
 ```
 
-## 许可证
+### 运行时目录结构
 
-MIT
+```
+# macOS 用户数据目录
+~/Library/Application Support/opencode-launcher/
+├── config.json          # 配置文件（npm 源、工作目录等）
+├── nodejs/              # 独立 Node.js 环境
+│   ├── bin/
+│   │   ├── node         # Node.js 可执行文件
+│   │   └── npm          # npm 命令
+│   └── lib/
+└── opencode/            # OpenCode 安装目录
+    └── bin/
+        └── opencode     # OpenCode 可执行文件
+
+# 开发环境使用独立目录
+~/Library/Application Support/opencode-launcher-dev/
+```
+
+## 🎯 核心价值
+
+1. **零污染**：完全独立的运行环境，不影响系统全局配置
+2. **开箱即用**：无需手动配置 Node.js 和 npm，图形化向导
+3. **傻瓜式操作**：3 步完成环境设置，一键启动
+4. **多启动方式**：支持 TUI 和 Web 两种模式，满足不同场景
+5. **国内优化**：默认淘宝源，安装速度快
+6. **跨平台支持**：支持 macOS/Windows，5 种系统架构
+7. **可扩展性**：预留配置管理界面，支持未来功能扩展
+
+## 📝 开发规范
+
+### 代码风格
+- 使用 ES6+ 语法
+- 使用 async/await 处理异步操作
+- 遵循 Electron 安全最佳实践
+
+### 提交规范
+- feat: 新功能
+- fix: 修复 bug
+- docs: 文档更新
+- style: 代码格式调整
+- refactor: 代码重构
+- test: 测试相关
+- chore: 构建/工具链相关
+
+## 🤝 贡献指南
+
+欢迎贡献代码、报告问题或提出建议！
+
+1. Fork 本项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
+
+## 📄 许可证
+
+GNU AGPL v3 License - 详见 [LICENSE](LICENSE) 文件
+
+本项目采用 GNU Affero General Public License v3.0 开源协议，这意味着：
+- ✅ 可以自由使用、修改和分发
+- ✅ 必须开源修改后的代码
+- ✅ 通过网络提供服务时也必须开源（AGPL 特性）
+- ✅ 必须保留原作者版权声明
+
+## 🙏 致谢
+
+- [OpenCode AI](https://github.com/openhands-ai/openhands) - 强大的 AI 编程助手
+- [Electron](https://www.electronjs.org/) - 跨平台桌面应用框架
+- [Node.js](https://nodejs.org/) - JavaScript 运行时
+
+---
+
+<p align="center">Made with ❤️ for OpenCode Community</p>
