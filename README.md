@@ -7,6 +7,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Electron-28.0-blue" alt="Electron">
   <img src="https://img.shields.io/badge/Node.js-22.22.0-green" alt="Node.js">
+  <img src="https://img.shields.io/badge/Version-0.1.0-orange" alt="Version">
   <img src="https://img.shields.io/badge/License-AGPL%20v3-blue" alt="License">
 </p>
 
@@ -48,9 +49,10 @@ OpenCode Launcher 是一个为 [OpenCode](https://opencode.ai/) 打造的独立�
 - 自动配置环境变量和工作目录
 
 #### 5. **国内优化**
-- 默认使用淘宝 npm 镜像源（https://registry.npmmirror.com）
+- 内置多个国内镜像源（阿里、腾讯、华为）
 - 支持一键切换官方源或自定义源
 - 大幅提升国内用户安装速度
+- 默认使用阿里镜像源（https://registry.npmmirror.com）
 
 #### 6. **可扩展架构**
 - 预留配置管理、MCP 服务器、Skills 配置页面
@@ -67,8 +69,8 @@ OpenCode Launcher 是一个为 [OpenCode](https://opencode.ai/) 打造的独立�
   - 存储路径：`~/Library/Application Support/opencode-launcher/nodejs/`（macOS）
 
 - **npm 源管理**
-  - 默认淘宝镜像源，支持快速切换官方源
-  - 支持自定义 npm 源地址
+  - 内置多个国内镜像源：阿里源、腾讯源、华为源
+  - 支持一键切换官方源或自定义源
   - 仅修改独立环境配置，不影响系统全局 npm
 
 - **OpenCode 安装**
@@ -76,13 +78,20 @@ OpenCode Launcher 是一个为 [OpenCode](https://opencode.ai/) 打造的独立�
   - 实时显示安装进度和详细日志
   - 安装路径：`~/Library/Application Support/opencode-launcher/opencode/`
 
+- **环境重置功能**
+  - 一键清空用户数据目录（Node.js、OpenCode、配置文件）
+  - 安全确认机制，防止误操作
+  - 重置后需重新配置环境
+
 - **工作目录管理**
   - 可视化选择项目工作目录
+  - 支持手动输入路径和拖拽上传
   - 自动保存并恢复上次选择的目录
 
 - **双模式启动**
   - **TUI 模式**：在系统终端打开 OpenCode 命令行界面
   - **Web 模式**：启动 Web 服务并在浏览器访问
+  - Web 端口号可自定义配置（默认 4096）
   - 自动配置 PATH 环境变量
   - 启动后自动最小化启动器窗口
 
@@ -90,12 +99,14 @@ OpenCode Launcher 是一个为 [OpenCode](https://opencode.ai/) 打造的独立�
   - 实时显示 Node.js 环境状态
   - 实时显示 OpenCode 安装状态
   - 实时显示当前 npm 源配置
+  - 应用版本号显示
 
 - **跨平台打包**
   - 支持 macOS（ARM64、x64）
   - 支持 Windows（ARM64、x64、x86）
   - 预留 Linux 支持
   - 多架构打包脚本
+  - 交互式打包工具（`build-interactive.sh`）
 
 ### 🚧 预留功能（待开发）
 
@@ -143,6 +154,30 @@ npm run dev
 
 ## 📦 打包方法
 
+### 方式一：交互式打包（推荐）
+
+使用交互式脚本进行打包，支持版本号管理、依赖检查和多平台打包：
+
+```bash
+# 给脚本添加执行权限（首次使用）
+chmod +x build-interactive.sh
+
+# 运行交互式打包工具
+./build-interactive.sh
+```
+
+**交互式打包特性：**
+- 打包前提示输入或更新版本号（使用 `npm version` 更新 package.json）
+- 自动检查 Node.js 包完整性
+- 支持单架构或全架构打包
+- 自动清理用户数据目录
+- 显示打包进度和耗时
+- 支持 macOS 和 Windows 所有架构
+
+### 方式二：命令行打包
+
+直接使用 npm scripts 进行打包：
+
 ### 准备工作
 
 **重要**：打包前需要准备 Node.js 独立包（约 30-50MB/个）
@@ -174,8 +209,8 @@ npm run dist:mac-x64    # Intel
 # 打包所有架构（arm64 + x64）
 npm run dist:mac-all
 
-# 输出文件：dist/OpenCode Launcher-1.0.0-arm64.dmg（Apple Silicon）
-#         或 dist/OpenCode Launcher-1.0.0-x64.dmg（Intel）
+# 输出文件：dist/OpenCode Launcher-0.1.0-macos-arm64.dmg（Apple Silicon）
+#         或 dist/OpenCode Launcher-0.1.0-macos-x64.dmg（Intel）
 ```
 
 **注意：**
@@ -205,8 +240,8 @@ npm run dist:win-arm64  # ARM64 Windows
 npm run dist:win-all
 
 # 输出文件：
-# - 安装版：dist/OpenCode Launcher Setup 1.0.0.exe
-# - 便携版：dist/OpenCode Launcher-1.0.0-win.zip
+# - 安装版：dist/OpenCode Launcher Setup 0.1.0.exe
+# - 便携版：dist/OpenCode Launcher-0.1.0-windows-x64.zip
 ```
 
 **注意：**
@@ -237,8 +272,8 @@ npm run dist:win-arm64
 npm run dist:win-all
 
 # 输出文件：
-# - 安装版：dist/OpenCode Launcher Setup 1.0.0.exe
-# - 便携版：dist/OpenCode Launcher-1.0.0-win.zip
+# - 安装版：dist/OpenCode Launcher Setup 0.1.0.exe
+# - 便携版：dist/OpenCode Launcher-0.1.0-windows-x64.zip
 ```
 
 **前置准备：**
@@ -277,9 +312,9 @@ npm run dist -- --mac
 - 看到 "✓ Node.js 解压成功！" 后进入下一步
 
 **② 配置 npm 源**
-- 默认已填入淘宝镜像源：`https://registry.npmmirror.com`
+- 默认已填入阿里镜像源：`https://registry.npmmirror.com`
 - 可选操作：
-  - 点击 **"官方源"** 快速切换到 npm 官方源
+  - 点击预设按钮快速切换：**阿里源**、**腾讯源**、**华为源**、**官方源**
   - 或手动输入自定义 npm 源地址
 - 点击 **"设置 npm 源"** 按钮
 - 看到 "✓ npm 源配置成功！" 后进入下一步
@@ -302,11 +337,12 @@ npm run dist -- --mac
 #### 主要功能
 
 - **独立环境**：Node.js 和 OpenCode 完全独立安装，不影响系统环境
-- **npm 源配置**：支持淘宝源、官方源或自定义源
+- **npm 源配置**：支持阿里源、腾讯源、华为源、官方源或自定义源
+- **环境重置**：一键清空用户数据目录，重置所有配置
 - **TUI 模式**：传统终端界面，功能最完整，适合命令行用户
-- **Web 模式**：浏览器访问，更适合远程使用或不熟悉命令行的用户
+- **Web 模式**：浏览器访问，端口号可自定义，适合远程使用或不熟悉命令行的用户
 - **工作目录持久化**：自动记住上次选择的工作目录
-- **状态监控**：实时显示环境配置状态
+- **状态监控**：实时显示环境配置状态和应用版本号
 
 ### 常见问题
 
@@ -314,7 +350,7 @@ npm run dist -- --mac
 
 A: 请检查：
 1. Node.js 是否已成功解压（首页状态显示"已配置 ✓"）
-2. npm 源是否配置正确（建议使用淘宝源）
+2. npm 源是否配置正确（建议使用阿里源、腾讯源或华为源）
 3. 网络连接是否正常
 4. 查看安装日志中的错误信息
 
@@ -328,7 +364,7 @@ A: TUI 会在系统终端中打开，请检查：
 **Q: Web 模式无法访问？**
 
 A: 请检查：
-1. 端口是否被占用（可在首页更改端口号）
+1. 端口是否被占用（可在"通用设置"页面更改端口号）
 2. 等待 3-5 秒后再访问浏览器
 3. 查看终端中是否有错误信息
 4. 确认防火墙没有阻止连接
@@ -364,7 +400,16 @@ A: 会的。新旧版本共享同一个用户数据目录，包括：
 
 **Q: 如何完全重置环境？**
 
-A: 删除用户数据目录即可：
+A: 有两种方式：
+
+**方式一：使用应用内功能（推荐）**
+1. 打开应用，进入 **"运行环境"** 页面
+2. 滚动到底部的 **"重置环境"** 区域
+3. 点击 **"重置环境"** 按钮
+4. 在弹出的确认对话框中点击确认
+5. 重启应用后将显示为全新状态
+
+**方式二：手动删除数据目录**
 ```bash
 # macOS
 rm -rf ~/Library/Application\ Support/opencode-launcher
@@ -427,10 +472,9 @@ OC-Launcher/
 │   ├── node-v22.22.0-win-x64.zip
 │   └── node-v22.22.0-win-x86.zip
 ├── dist/                        # 打包输出目录（自动生成）
+├── build-interactive.sh         # 交互式打包脚本
 ├── package.json                 # 项目配置和打包设置
-├── README.md                    # 项目说明文档（本文档）
-├── USAGE.md                     # 详细使用指南
-└── PROJECT_SUMMARY.md           # 项目总结
+└── README.md                    # 项目说明文档（本文档）
 ```
 
 ### 运行时目录结构
@@ -457,10 +501,12 @@ OC-Launcher/
 1. **零污染**：完全独立的运行环境，不影响系统全局配置
 2. **开箱即用**：无需手动配置 Node.js 和 npm，图形化向导
 3. **傻瓜式操作**：3 步完成环境设置，一键启动
-4. **多启动方式**：支持 TUI 和 Web 两种模式，满足不同场景
-5. **国内优化**：默认淘宝源，安装速度快
-6. **跨平台支持**：支持 macOS/Windows，5 种系统架构
-7. **可扩展性**：预留配置管理界面，支持未来功能扩展
+4. **多启动方式**：支持 TUI 和 Web 两种模式，Web 端口可自定义
+5. **国内优化**：内置多个国内镜像源（阿里、腾讯、华为），安装速度快
+6. **环境管理**：支持一键重置环境，方便故障排查
+7. **跨平台支持**：支持 macOS/Windows，5 种系统架构
+8. **可扩展性**：预留配置管理界面，支持未来功能扩展
+9. **开发友好**：交互式打包工具，版本号管理，开发/生产环境隔离
 
 ## 📝 开发规范
 
@@ -500,7 +546,7 @@ GNU AGPL v3 License - 详见 [LICENSE](LICENSE) 文件
 
 ## 🙏 致谢
 
-- [OpenCode AI](https://github.com/openhands-ai/openhands) - 强大的 AI 编程助手
+- [OpenCode](https://opencode.ai/) - 强大的 AI 编程助手
 - [Electron](https://www.electronjs.org/) - 跨平台桌面应用框架
 - [Node.js](https://nodejs.org/) - JavaScript 运行时
 
