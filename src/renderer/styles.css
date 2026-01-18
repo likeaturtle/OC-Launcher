@@ -23,7 +23,7 @@ body {
   border-right: 1px solid #3c3c3c;
   display: flex;
   flex-direction: column;
-  padding: 20px 0;
+  padding: 40px 0 20px;
 }
 
 .logo {
@@ -72,6 +72,10 @@ body {
 .nav-item .icon {
   margin-right: 10px;
   font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
 }
 
 /* 主内容区 */
@@ -116,9 +120,9 @@ body {
   border: 1px solid #3c3c3c;
   border-radius: 8px;
   padding: 25px;
-  margin-bottom: 30px;
+  margin-bottom: 15px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
 }
 
@@ -126,6 +130,35 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.status-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tooltip {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 9999;
+  border: 1px solid #444;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.tooltip.active {
+  display: block;
+  opacity: 1;
 }
 
 .status-label {
@@ -139,22 +172,73 @@ body {
   font-size: 16px;
   color: #ffffff;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-value i {
+  font-size: 14px;
 }
 
 /* 工作目录选择 */
 .work-dir-section {
   margin-bottom: 30px;
+  margin-top: 20px;
+  padding: 15px;
+  margin-left: -15px;
+  margin-right: -15px;
+  border: 2px dashed transparent;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.work-dir-section.drag-over {
+  border-color: #4ec9b0;
+  background: rgba(78, 201, 176, 0.1);
+}
+
+.work-dir-section .input-group {
+  gap: 12px;
+}
+
+#select-dir-btn {
+  min-width: 100px;
 }
 
 .work-dir-section h3 {
   font-size: 16px;
   color: #ffffff;
   margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.work-dir-section h3 i {
+  color: #007acc;
+  font-size: 16px;
+}
+
+.input-hint {
+  font-size: 12px;
+  color: #858585;
+  margin-top: 8px;
+  margin-left: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input-hint i {
+  color: #569cd6;
 }
 
 .input-group {
   display: flex;
-  gap: 10px;
+  gap: 25px;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
 .input-group input {
@@ -165,6 +249,7 @@ body {
   border-radius: 5px;
   color: #cccccc;
   font-size: 14px;
+  transition: all 0.2s;
 }
 
 .input-group input:focus {
@@ -181,6 +266,92 @@ body {
   cursor: pointer;
   transition: all 0.2s;
   font-weight: 500;
+}
+
+/* 流光按钮样式 */
+.btn-streaming {
+  position: relative;
+  background: #000;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-decoration: none;
+  min-width: 200px;
+}
+
+.btn-streaming:not(:disabled):hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(0, 122, 204, 0.4);
+}
+
+.btn-streaming::before {
+  content: '';
+  position: absolute;
+  top: -150%;
+  left: -150%;
+  width: 400%;
+  height: 400%;
+  background: conic-gradient(
+    #fd004c,
+    #fe9000,
+    #fff020,
+    #3edf4b,
+    #3363ff,
+    #b102b7,
+    #fd004c
+  );
+  animation: rotate-streaming 4s linear infinite;
+  z-index: -2;
+}
+
+.btn-streaming:disabled::before {
+  animation: none;
+  background: #3c3c3c;
+}
+
+.btn-streaming::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: #1e1e1e;
+  border-radius: 6px;
+  z-index: -1;
+  transition: background 0.2s;
+}
+
+.btn-streaming:not(:disabled):hover::after {
+  background: #252526;
+}
+
+.btn-streaming:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-streaming:disabled::after {
+  background: #1e1e1e;
+}
+
+.btn-streaming .btn-icon,
+.btn-streaming .btn-text {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes rotate-streaming {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .btn-primary {
@@ -214,6 +385,28 @@ body {
   gap: 10px;
 }
 
+.btn-link {
+  background: none;
+  border: none;
+  color: #007acc;
+  padding: 0;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 400;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+  color: #40a9ff;
+}
+
+.btn-link:disabled {
+  color: #555555;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
 .btn-small {
   padding: 6px 12px;
   font-size: 12px;
@@ -221,13 +414,18 @@ body {
 
 .btn-icon {
   font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 操作区域 */
 .actions {
   display: flex;
-  gap: 15px;
+  justify-content: center;
+  gap: 30px;
   margin-bottom: 20px;
+  margin-top: 60px;
 }
 
 .web-options {
@@ -275,6 +473,16 @@ body {
   margin-bottom: 15px;
 }
 
+.step-header .icon {
+  font-size: 24px;
+  color: #007acc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
 .step-number {
   width: 36px;
   height: 36px;
@@ -296,6 +504,42 @@ body {
 .setup-step p {
   margin-bottom: 15px;
   color: #858585;
+}
+
+.step-content-horizontal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 30px;
+}
+
+.step-content-horizontal p {
+  width: 100%;
+  text-align: center;
+}
+
+.setup-divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  color: #d32f2f;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.setup-divider::before,
+.setup-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #d32f2f;
+  opacity: 0.3;
+}
+
+.setup-divider .divider-text {
+  padding: 0 15px;
 }
 
 .step-status {
@@ -328,9 +572,11 @@ body {
 }
 
 .preset-registries {
-  display: flex;
-  gap: 10px;
-  margin: 10px 0;
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 0 8px;
+  align-self: stretch;
 }
 
 .install-log {
@@ -365,6 +611,10 @@ body {
   font-size: 80px;
   margin-bottom: 20px;
   opacity: 0.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #007acc;
 }
 
 .placeholder-content h3 {

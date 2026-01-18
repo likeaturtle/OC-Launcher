@@ -80,6 +80,22 @@ show_menu() {
     echo ""
 }
 
+# 询问版本号
+prompt_version() {
+    local current_version=$(node -p "require('./package.json').version")
+    echo ""
+    print_info "上一次版本号: $current_version"
+    read -p "请输入新版本号 (直接回车保持不变): " new_version
+    
+    if [ ! -z "$new_version" ]; then
+        print_info "更新版本号到: $new_version"
+        npm version "$new_version" --no-git-tag-version > /dev/null
+        print_success "版本号已更新为: $new_version"
+    else
+        print_info "保持版本号: $current_version"
+    fi
+}
+
 # 确认打包
 confirm_build() {
     local target=$1
@@ -223,41 +239,49 @@ main() {
         
         case $choice in
             1)
+                prompt_version
                 if check_all_nodejs_packages "mac-arm64" && confirm_build "macOS ARM64"; then
                     run_build "dist:mac-arm64" "macOS ARM64"
                 fi
                 ;;
             2)
+                prompt_version
                 if check_all_nodejs_packages "mac-x64" && confirm_build "macOS x64"; then
                     run_build "dist:mac-x64" "macOS x64"
                 fi
                 ;;
             3)
+                prompt_version
                 if check_all_nodejs_packages "mac-all" && confirm_build "macOS 全架构"; then
                     run_build "dist:mac-all" "macOS 全架构"
                 fi
                 ;;
             4)
+                prompt_version
                 if check_all_nodejs_packages "win-x64" && confirm_build "Windows x64"; then
                     run_build "dist:win-x64" "Windows x64"
                 fi
                 ;;
             5)
+                prompt_version
                 if check_all_nodejs_packages "win-x86" && confirm_build "Windows x86"; then
                     run_build "dist:win-x86" "Windows x86"
                 fi
                 ;;
             6)
+                prompt_version
                 if check_all_nodejs_packages "win-arm64" && confirm_build "Windows ARM64"; then
                     run_build "dist:win-arm64" "Windows ARM64"
                 fi
                 ;;
             7)
+                prompt_version
                 if check_all_nodejs_packages "win-all" && confirm_build "Windows 全架构"; then
                     run_build "dist:win-all" "Windows 全架构"
                 fi
                 ;;
             8)
+                prompt_version
                 if check_all_nodejs_packages "all" && confirm_build "所有平台和架构"; then
                     print_header "开始全平台打包"
                     

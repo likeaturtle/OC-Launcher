@@ -6,6 +6,20 @@ const os = require('os');
 const tar = require('tar');
 const AdmZip = require('adm-zip');
 
+// 开发环境启用热重载
+if (!app.isPackaged) {
+  require('electron-reload')(path.join(__dirname, '..'), {
+    electron: path.join(__dirname, '../../node_modules', '.bin', 'electron'),
+    hardResetMethod: 'exit',
+    // 监听 src 目录下的所有文件
+    watched: [
+      path.join(__dirname, '..', '**', '*.js'),
+      path.join(__dirname, '..', '**', '*.html'),
+      path.join(__dirname, '..', '**', '*.css')
+    ]
+  });
+}
+
 let mainWindow;
 
 // 区分开发和生产环境的 userData 路径
@@ -458,19 +472,34 @@ ipcMain.handle('get-config', () => {
   return initConfig();
 });
 
+ipcMain.handle('get-version', () => {
+  return app.getVersion();
+});
+
 ipcMain.handle('save-config', (event, config) => {
   saveConfig(config);
   return { success: true };
 });
 
-ipcMain.handle('check-nodejs', () => {
+ipcMain.handle('check-nodejs', async () => {
   const config = initConfig();
   // 更严格的检查：需要配置文件标记为 true 且关键文件存在
   const { nodePath } = getNodeExecutionPaths();
   const extracted = config.nodejsExtracted && fs.existsSync(nodePath);
+  
+  let version = null;
+  if (extracted) {
+    try {
+      version = require('child_process').execSync(`"${nodePath}" -v`).toString().trim();
+    } catch (e) {
+      console.error('[Node.js] 获取版本号失败:', e);
+    }
+  }
+
   return {
     extracted: extracted,
-    path: NODEJS_PATH
+    path: NODEJS_PATH,
+    version: version
   };
 });
 
@@ -483,14 +512,27 @@ ipcMain.handle('get-npm-registry', async () => {
   }
 });
 
-ipcMain.handle('check-opencode', () => {
+ipcMain.handle('check-opencode', async () => {
   const config = initConfig();
   // 严格检查 OpenCode 是否安装：配置标记为 true 且可执行文件存在
   const opencodePath = path.join(OPENCODE_PATH, process.platform === 'win32' ? 'opencode.cmd' : 'bin/opencode');
   const installed = config.opencodeInstalled && fs.existsSync(opencodePath);
+  
+  let version = null;
+  if (installed) {
+    try {
+      const { nodePath } = getNodeExecutionPaths();
+      // 使用独立 Node.js 运行 opencode -v
+      version = require('child_process').execSync(`"${nodePath}" "${opencodePath}" -v`).toString().trim();
+    } catch (e) {
+      console.error('[OpenCode] 获取版本号失败:', e);
+    }
+  }
+
   return {
     installed: installed,
-    path: OPENCODE_PATH
+    path: OPENCODE_PATH,
+    version: version
   };
 });
 

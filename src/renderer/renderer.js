@@ -22,6 +22,10 @@ async function initialize() {
   config = await window.electronAPI.getConfig();
   await updateStatus();
   
+  // 更新版本号显示
+  const version = await window.electronAPI.getAppVersion();
+  document.getElementById('app-version').textContent = `App Version: v${version}`;
+  
   // 恢复工作目录
   if (config.workDir) {
     currentWorkDir = config.workDir;
@@ -45,39 +49,69 @@ async function updateStatus() {
   const nodejsCheck = await window.electronAPI.checkNodejs();
   
   const nodejsStatus = document.getElementById('nodejs-status');
+  const nodejsItem = nodejsStatus.parentElement;
+  
   if (nodejsCheck.extracted) {
-    nodejsStatus.textContent = '已配置 ✓';
+    let statusText = nodejsCheck.version ? `${nodejsCheck.version}` : '';
+    nodejsStatus.innerHTML = `<i class="fas fa-check-circle"></i> 已配置${statusText ? '（' + statusText + '）' : ''}`;
     nodejsStatus.style.color = '#4ec9b0';
+    nodejsItem.dataset.tooltip = '点击即可复制 Node.js 安装地址';
+    nodejsItem.onclick = () => copyToClipboard(nodejsCheck.path, 'Node.js 安装位置');
   } else {
     nodejsStatus.textContent = '未配置';
     nodejsStatus.style.color = '#858585';
+    nodejsItem.dataset.tooltip = '';
+    nodejsItem.onclick = null;
   }
   
   // 使用新的 checkOpenCode API
   const opencodeCheck = await window.electronAPI.checkOpenCode();
   const opencodeStatus = document.getElementById('opencode-status');
+  const opencodeItem = opencodeStatus.parentElement;
+  
   if (opencodeCheck.installed) {
-    opencodeStatus.textContent = '已安装 ✓';
+    let statusText = opencodeCheck.version ? `${opencodeCheck.version}` : '';
+    opencodeStatus.innerHTML = `<i class="fas fa-check-circle"></i> 已安装${statusText ? '（' + statusText + '）' : ''}`;
     opencodeStatus.style.color = '#4ec9b0';
+    opencodeItem.dataset.tooltip = '点击即可复制 OpenCode 安装地址';
+    opencodeItem.onclick = () => copyToClipboard(opencodeCheck.path, 'OpenCode 安装位置');
     config.opencodeInstalled = true; // 同步更新本地 config
   } else {
     opencodeStatus.textContent = '未安装';
     opencodeStatus.style.color = '#858585';
+    opencodeItem.dataset.tooltip = '';
+    opencodeItem.onclick = null;
     config.opencodeInstalled = false; // 同步更新本地 config
   }
   
   // 获取实际的 npm 源配置
   const npmRegistryResult = await window.electronAPI.getNpmRegistry();
   const npmRegistry = document.getElementById('npm-registry');
+  const npmItem = npmRegistry.parentElement;
+  
   if (npmRegistryResult.success && npmRegistryResult.registry) {
     npmRegistry.textContent = npmRegistryResult.registry;
     npmRegistry.style.color = '#4ec9b0';
+    npmItem.dataset.tooltip = '点击即可复制 npm 源地址';
+    npmItem.onclick = () => copyToClipboard(npmRegistryResult.registry, 'npm 源地址');
     config.npmRegistry = npmRegistryResult.registry; // 同步更新本地 config
   } else {
     npmRegistry.textContent = '未配置';
     npmRegistry.style.color = '#858585';
+    npmItem.dataset.tooltip = '';
+    npmItem.onclick = null;
     config.npmRegistry = ''; // 清空本地 config
   }
+}
+
+// 复制到剪贴板
+function copyToClipboard(text, label) {
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    showNotification(`${label}已复制到剪贴板`, 'success');
+  }).catch(err => {
+    console.error('复制失败:', err);
+  });
 }
 
 // 选择工作目录
@@ -89,6 +123,78 @@ document.getElementById('select-dir-btn').addEventListener('click', async () => 
     config.workDir = currentWorkDir;
     await window.electronAPI.saveConfig(config);
     updateLaunchButtons();
+  }
+});
+
+// 工作目录输入框变化监听
+const workDirInput = document.getElementById('work-dir');
+workDirInput.addEventListener('input', async (e) => {
+  const inputPath = e.target.value.trim();
+  if (inputPath) {
+    currentWorkDir = inputPath;
+    config.workDir = currentWorkDir;
+    await window.electronAPI.saveConfig(config);
+    updateLaunchButtons();
+  }
+});
+
+// 支持拖拽目录到工作目录选择区域（扩大拖拽区域）
+const workDirSection = document.querySelector('.work-dir-section');
+
+workDirSection.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  workDirSection.classList.add('drag-over');
+});
+
+workDirSection.addEventListener('dragleave', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  // 检查是否真正离开了区域（不是移动到子元素）
+  const rect = workDirSection.getBoundingClientRect();
+  const x = e.clientX;
+  const y = e.clientY;
+  
+  if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+    workDirSection.classList.remove('drag-over');
+  }
+});
+
+workDirSection.addEventListener('drop', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  // 立即移除拖拽样式，避免卡顿感
+  workDirSection.classList.remove('drag-over');
+  
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    // 获取第一个拖拽的文件/目录的路径
+    const path = files[0].path;
+    
+    // 使用 requestAnimationFrame 确保 UI 更新在下一帧执行
+    requestAnimationFrame(() => {
+      currentWorkDir = path;
+      workDirInput.value = currentWorkDir;
+      
+      // 完全非阻塞的后台保存
+      window.electronAPI.saveConfig({ ...config, workDir: currentWorkDir }).then(() => {
+        config.workDir = currentWorkDir;
+        updateLaunchButtons();
+      });
+    });
+  }
+});
+
+// 全局监听 dragend 和 dragleave，确保拖拽结束时移除样式
+document.addEventListener('dragend', () => {
+  workDirSection.classList.remove('drag-over');
+});
+
+document.addEventListener('drop', (e) => {
+  // 如果在区域外释放，也要移除样式
+  if (!workDirSection.contains(e.target)) {
+    workDirSection.classList.remove('drag-over');
   }
 });
 
@@ -152,7 +258,7 @@ document.getElementById('extract-nodejs-btn').addEventListener('click', async ()
 });
 
 // 快速设置 npm 源
-document.querySelectorAll('.preset-registries .btn').forEach(btn => {
+document.querySelectorAll('.preset-registries .btn-link').forEach(btn => {
   btn.addEventListener('click', () => {
     const registry = btn.dataset.registry;
     document.getElementById('npm-registry-input').value = registry;
@@ -279,4 +385,35 @@ function showNotification(message, type = 'info') {
 }
 
 // 页面加载完成后初始化
-window.addEventListener('DOMContentLoaded', initialize);
+window.addEventListener('DOMContentLoaded', () => {
+  initialize();
+  setupTooltip();
+});
+
+// 设置全局 Tooltip 跟随鼠标
+function setupTooltip() {
+  const tooltip = document.getElementById('custom-tooltip');
+  
+  document.addEventListener('mouseover', (e) => {
+    const target = e.target.closest('[data-tooltip]');
+    if (target && target.dataset.tooltip) {
+      tooltip.textContent = target.dataset.tooltip;
+      tooltip.classList.add('active');
+    }
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (tooltip.classList.contains('active')) {
+      // 偏移 15px 避免遮挡鼠标
+      tooltip.style.left = (e.clientX + 15) + 'px';
+      tooltip.style.top = (e.clientY + 15) + 'px';
+    }
+  });
+
+  document.addEventListener('mouseout', (e) => {
+    const target = e.target.closest('[data-tooltip]');
+    if (target) {
+      tooltip.classList.remove('active');
+    }
+  });
+}
