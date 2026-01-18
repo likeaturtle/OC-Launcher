@@ -12,7 +12,7 @@
 
 ## 📖 项目简介
 
-OpenCode Launcher 是一个为 [OpenCode AI](https://github.com/openhands-ai/openhands) 打造的独立启动器，提供**完全隔离**的 Node.js 环境管理、图形化配置界面和一键启动功能。它解决了 OpenCode 需要手动配置 Node.js 环境、npm 源设置繁琐、命令行操作复杂等痛点。
+OpenCode Launcher 是一个为 [OpenCode](https://opencode.ai/) 打造的独立启动器，提供**完全隔离**的 Node.js 环境管理、图形化配置界面和一键启动功能。它解决了 OpenCode 需要手动配置 Node.js 环境、npm 源设置繁琐、命令行操作复杂等痛点。
 
 ### 🎯 项目定位
 
