@@ -20,7 +20,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
 // 初始化
 async function initialize() {
   config = await window.electronAPI.getConfig();
-  updateStatus();
+  await updateStatus();
   
   // 恢复工作目录
   if (config.workDir) {
@@ -29,7 +29,7 @@ async function initialize() {
     updateLaunchButtons();
   }
   
-  // 恢复 npm 源
+  // 恢复 npm 源输入框（如果有配置）
   if (config.npmRegistry) {
     document.getElementById('npm-registry-input').value = config.npmRegistry;
   }
@@ -66,13 +66,17 @@ async function updateStatus() {
     config.opencodeInstalled = false; // 同步更新本地 config
   }
   
+  // 获取实际的 npm 源配置
+  const npmRegistryResult = await window.electronAPI.getNpmRegistry();
   const npmRegistry = document.getElementById('npm-registry');
-  if (config.npmRegistry) {
-    npmRegistry.textContent = config.npmRegistry;
+  if (npmRegistryResult.success && npmRegistryResult.registry) {
+    npmRegistry.textContent = npmRegistryResult.registry;
     npmRegistry.style.color = '#4ec9b0';
+    config.npmRegistry = npmRegistryResult.registry; // 同步更新本地 config
   } else {
     npmRegistry.textContent = '未配置';
     npmRegistry.style.color = '#858585';
+    config.npmRegistry = ''; // 清空本地 config
   }
 }
 
@@ -221,6 +225,51 @@ document.getElementById('install-opencode-btn').addEventListener('click', async 
   }
   
   btn.textContent = '安装 OpenCode';
+});
+
+// 重置环境
+document.getElementById('reset-env-btn').addEventListener('click', async () => {
+  const confirmText = '此操作将清空所有环境数据，包括已安装的 Node.js 和 OpenCode，操作不可逆！\n\n确定要继续吗？';
+  if (!confirm(confirmText)) {
+    return;
+  }
+  
+  const btn = document.getElementById('reset-env-btn');
+  const status = document.getElementById('reset-env-status');
+  
+  btn.disabled = true;
+  btn.textContent = '重置中...';
+  status.className = 'step-status info';
+  status.textContent = '正在清空用户数据目录...';
+  
+  const result = await window.electronAPI.resetEnvironment();
+  
+  if (result.success) {
+    status.className = 'step-status success';
+    status.textContent = '✓ 环境重置成功！页面将在 2 秒后重新加载...';
+    
+    // 重置本地配置状态
+    config.nodejsExtracted = false;
+    config.opencodeInstalled = false;
+    config.npmRegistry = '';
+    
+    // 清空状态显示
+    document.getElementById('nodejs-extract-status').textContent = '';
+    document.getElementById('npm-config-status').textContent = '';
+    document.getElementById('opencode-install-status').textContent = '';
+    document.getElementById('install-log').textContent = '';
+    
+    // 2秒后重新加载页面
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+  } else {
+    status.className = 'step-status error';
+    status.textContent = '✗ 重置失败: ' + result.error;
+    btn.disabled = false;
+  }
+  
+  btn.textContent = '重置环境';
 });
 
 // 通知提示

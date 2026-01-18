@@ -23,7 +23,7 @@ const OPENCODE_PATH = path.join(app.getPath('userData'), 'opencode');
 function initConfig() {
   if (!fs.existsSync(CONFIG_PATH)) {
     const defaultConfig = {
-      npmRegistry: 'https://registry.npmmirror.com',
+      npmRegistry: '',
       workDir: '',
       webPort: 4096,
       nodejsExtracted: false,
@@ -188,6 +188,56 @@ function ensureNodejsPermissions() {
       }
     });
   }
+}
+
+// 获取当前 npm 源配置
+function getNpmRegistry() {
+  return new Promise((resolve, reject) => {
+    const { nodePath, npmCliPath, nodeBinPath } = getNodeExecutionPaths();
+    
+    if (!fs.existsSync(nodePath)) {
+      return resolve(null);
+    }
+    if (!fs.existsSync(npmCliPath)) {
+      return resolve(null);
+    }
+
+    ensureNodejsPermissions();
+    
+    // 设置环境变量
+    const env = { ...process.env, PREFIX: NODEJS_PATH };
+    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+    const currentPath = env[pathKey] || env.PATH || env.Path || '';
+    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
+    env.PATH = env[pathKey];
+    env.Path = env[pathKey];
+    
+    const child = spawn(nodePath, [npmCliPath, 'config', 'get', 'registry'], { env });
+    
+    let stdout = '';
+    let stderr = '';
+    
+    child.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+    
+    child.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    child.on('error', (err) => {
+      resolve(null);
+    });
+    
+    child.on('close', (code) => {
+      if (code === 0) {
+        const registry = stdout.trim();
+        resolve(registry || null);
+      } else {
+        resolve(null);
+      }
+    });
+  });
 }
 
 // 配置 npm 源
@@ -424,6 +474,15 @@ ipcMain.handle('check-nodejs', () => {
   };
 });
 
+ipcMain.handle('get-npm-registry', async () => {
+  try {
+    const registry = await getNpmRegistry();
+    return { success: true, registry };
+  } catch (error) {
+    return { success: false, registry: null };
+  }
+});
+
 ipcMain.handle('check-opencode', () => {
   const config = initConfig();
   // 严格检查 OpenCode 是否安装：配置标记为 true 且可执行文件存在
@@ -514,6 +573,34 @@ ipcMain.handle('launch-tui', (event, workDir) => {
 ipcMain.handle('launch-web', (event, { workDir, port }) => {
   try {
     launchOpenCodeWeb(workDir, port);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('reset-environment', async () => {
+  try {
+    // 清空 Node.js 目录
+    if (fs.existsSync(NODEJS_PATH)) {
+      fs.rmSync(NODEJS_PATH, { recursive: true, force: true });
+    }
+    
+    // 清空 OpenCode 目录
+    if (fs.existsSync(OPENCODE_PATH)) {
+      fs.rmSync(OPENCODE_PATH, { recursive: true, force: true });
+    }
+    
+    // 重置配置文件
+    const defaultConfig = {
+      npmRegistry: '',
+      workDir: '',
+      webPort: 4096,
+      nodejsExtracted: false,
+      opencodeInstalled: false
+    };
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2));
+    
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };

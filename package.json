@@ -53,6 +53,7 @@
     "mac": {
       "target": ["dmg"],
       "category": "public.app-category.developer-tools",
+      "artifactName": "${productName}-${version}-macos-${arch}.${ext}",
       "extraResources": [
         {
           "from": "nodejs_package/node-v22.22.0-darwin-${arch}.tar.gz",
@@ -62,6 +63,7 @@
     },
     "win": {
       "target": ["nsis", "zip"],
+      "artifactName": "${productName}-${version}-windows-${arch}.${ext}",
       "extraResources": [
         {
           "from": "nodejs_package/node-v22.22.0-win-${arch}.zip",
