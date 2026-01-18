@@ -53,13 +53,17 @@ async function updateStatus() {
     nodejsStatus.style.color = '#858585';
   }
   
+  // 使用新的 checkOpenCode API
+  const opencodeCheck = await window.electronAPI.checkOpenCode();
   const opencodeStatus = document.getElementById('opencode-status');
-  if (config.opencodeInstalled) {
+  if (opencodeCheck.installed) {
     opencodeStatus.textContent = '已安装 ✓';
     opencodeStatus.style.color = '#4ec9b0';
+    config.opencodeInstalled = true; // 同步更新本地 config
   } else {
     opencodeStatus.textContent = '未安装';
     opencodeStatus.style.color = '#858585';
+    config.opencodeInstalled = false; // 同步更新本地 config
   }
   
   const npmRegistry = document.getElementById('npm-registry');

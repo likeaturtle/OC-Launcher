@@ -204,25 +204,61 @@ npm run dist:win-arm64  # ARM64 Windows
 # 打包所有架构（x64 + x86 + arm64）
 npm run dist:win-all
 
-# 输出文件：dist/OpenCode Launcher Setup 1.0.0.exe
+# 输出文件：
+# - 安装版：dist/OpenCode Launcher Setup 1.0.0.exe
+# - 便携版：dist/OpenCode Launcher-1.0.0-win.zip
 ```
 
 **注意：**
 - Windows 打包会根据系统架构选择对应的 Node.js（x64、x86 或 arm64）
 - 使用 `dist:win-*` 命令可明确指定目标架构
 - 打包前需手动清理：`%APPDATA%\opencode-launcher`（如需要）
+- **每次打包会生成两个版本**：
+  - **安装版（Setup.exe）**：需要安装到系统，写入注册表，有卸载程序
+  - **便携版（.zip）**：解压后直接运行，无需安装，适合 U 盘携带或临时使用
 
-#### 跨平台打包
+### 跨平台打包
 
-如需在 macOS 上打包 Windows 版本，或反之，需要额外配置：
+#### macOS 上打包 Windows 应用
+
+Electron Builder 支持在 macOS 上直接打包 Windows 应用，无需额外配置：
 
 ```bash
-# macOS 打包 Windows 版本（需要 wine）
-npm run dist -- --win
+# 打包 Windows x64 版本（64位 Windows）
+npm run dist:win-x64
 
-# Windows 打包 macOS 版本（不推荐）
+# 打包 Windows x86 版本（32位 Windows）
+npm run dist:win-x86
+
+# 打包 Windows ARM64 版本
+npm run dist:win-arm64
+
+# 打包所有 Windows 架构
+npm run dist:win-all
+
+# 输出文件：
+# - 安装版：dist/OpenCode Launcher Setup 1.0.0.exe
+# - 便携版：dist/OpenCode Launcher-1.0.0-win.zip
+```
+
+**前置准备：**
+- 确保 `nodejs_package/` 目录下有对应的 Windows Node.js 包
+- 例如打包 x64 版本需要：`node-v22.22.0-win-x64.zip`
+
+**注意：**
+- 不需要安装 Wine 或其他额外工具
+- Electron Builder 会自动处理跨平台打包
+- 生成的安装包可以直接在 Windows 系统上运行
+
+#### Windows 上打包 macOS 应用（不推荐）
+
+理论上可以在 Windows 打包 macOS 应用，但需要额外配置且不保证成功：
+
+```bash
 npm run dist -- --mac
 ```
+
+建议在目标平台上进行打包以获得最佳兼容性。
 
 ## 📚 使用说明
 
@@ -315,6 +351,29 @@ A:
 2. 删除用户数据目录：
    - macOS: `~/Library/Application Support/opencode-launcher`
    - Windows: `%APPDATA%\opencode-launcher`
+
+**Q: 升级到新版本后会保留之前的配置吗？**
+
+A: 会的。新旧版本共享同一个用户数据目录，包括：
+- Node.js 环境（无需重新解压）
+- OpenCode 安装（无需重新安装）
+- npm 源配置
+- 工作目录设置
+
+如需全新安装，请先删除用户数据目录后再运行新版本。
+
+**Q: 如何完全重置环境？**
+
+A: 删除用户数据目录即可：
+```bash
+# macOS
+rm -rf ~/Library/Application\ Support/opencode-launcher
+
+# Windows（在命令提示符中）
+rmdir /s /q %APPDATA%\opencode-launcher
+```
+
+重新启动应用后会显示为全新状态，需要重新配置环境。
 
 ## 🛠️ 技术栈
 

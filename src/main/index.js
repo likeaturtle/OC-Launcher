@@ -111,18 +111,37 @@ async function extractNodejs(packagePath) {
         const zip = new AdmZip(packagePath);
         zip.extractAllTo(NODEJS_PATH, true);
         
-        // 移动文件到根目录
+        // 移动文件到根目录（使用更安全的方式）
         const extractedDir = fs.readdirSync(NODEJS_PATH).find(f => f.startsWith('node-'));
         if (extractedDir) {
           const srcDir = path.join(NODEJS_PATH, extractedDir);
           const files = fs.readdirSync(srcDir);
+          
+          // 递归复制文件（避免 Windows rename 权限问题）
+          function copyRecursive(src, dest) {
+            const stats = fs.statSync(src);
+            if (stats.isDirectory()) {
+              if (!fs.existsSync(dest)) {
+                fs.mkdirSync(dest, { recursive: true });
+              }
+              const entries = fs.readdirSync(src);
+              for (const entry of entries) {
+                copyRecursive(path.join(src, entry), path.join(dest, entry));
+              }
+            } else {
+              fs.copyFileSync(src, dest);
+            }
+          }
+          
           files.forEach(file => {
-            fs.renameSync(
+            copyRecursive(
               path.join(srcDir, file),
               path.join(NODEJS_PATH, file)
             );
           });
-          fs.rmdirSync(srcDir);
+          
+          // 删除临时目录（使用递归删除）
+          fs.rmSync(srcDir, { recursive: true, force: true });
         }
         console.log('[解压] zip 解压完成');
         resolve();
@@ -396,9 +415,23 @@ ipcMain.handle('save-config', (event, config) => {
 
 ipcMain.handle('check-nodejs', () => {
   const config = initConfig();
+  // 更严格的检查：需要配置文件标记为 true 且关键文件存在
+  const { nodePath } = getNodeExecutionPaths();
+  const extracted = config.nodejsExtracted && fs.existsSync(nodePath);
   return {
-    extracted: config.nodejsExtracted && fs.existsSync(NODEJS_PATH),
+    extracted: extracted,
     path: NODEJS_PATH
+  };
+});
+
+ipcMain.handle('check-opencode', () => {
+  const config = initConfig();
+  // 严格检查 OpenCode 是否安装：配置标记为 true 且可执行文件存在
+  const opencodePath = path.join(OPENCODE_PATH, process.platform === 'win32' ? 'opencode.cmd' : 'bin/opencode');
+  const installed = config.opencodeInstalled && fs.existsSync(opencodePath);
+  return {
+    installed: installed,
+    path: OPENCODE_PATH
   };
 });
 

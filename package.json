@@ -7,8 +7,17 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "build": "electron-builder --dir",
-    "clean:userdata": "rm -rf ~/Library/Application\\ Support/opencode-launcher",
+    "clean:userdata:mac": "rm -rf ~/Library/Application\\ Support/opencode-launcher",
+    "clean:userdata:win": "if exist %APPDATA%\\opencode-launcher rmdir /s /q %APPDATA%\\opencode-launcher",
+    "clean:userdata": "node -e \"const fs=require('fs');const path=require('path');const dir=path.join(process.platform==='win32'?process.env.APPDATA:path.join(require('os').homedir(),'Library/Application Support'),'opencode-launcher');if(fs.existsSync(dir))fs.rmSync(dir,{recursive:true,force:true});\"",
     "predist": "npm run clean:userdata",
+    "predist:mac-arm64": "npm run clean:userdata",
+    "predist:mac-x64": "npm run clean:userdata",
+    "predist:mac-all": "npm run clean:userdata",
+    "predist:win-x64": "npm run clean:userdata",
+    "predist:win-x86": "npm run clean:userdata",
+    "predist:win-arm64": "npm run clean:userdata",
+    "predist:win-all": "npm run clean:userdata",
     "dist": "electron-builder",
     "dist:mac-arm64": "electron-builder --mac --arm64",
     "dist:mac-x64": "electron-builder --mac --x64",
@@ -52,7 +61,7 @@
       ]
     },
     "win": {
-      "target": ["nsis"],
+      "target": ["nsis", "zip"],
       "extraResources": [
         {
           "from": "nodejs_package/node-v22.22.0-win-${arch}.zip",
@@ -64,7 +73,7 @@
       "target": ["AppImage"],
       "category": "Development"
     },
-    "compression": "maximum",
+    "compression": "normal",
     "asar": true,
     "asarUnpack": [],
     "npmRebuild": false,

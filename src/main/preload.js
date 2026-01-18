@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getConfig: () => ipcRenderer.invoke('get-config'),
   saveConfig: (config) => ipcRenderer.invoke('save-config', config),
   checkNodejs: () => ipcRenderer.invoke('check-nodejs'),
+  checkOpenCode: () => ipcRenderer.invoke('check-opencode'),
   extractNodejs: () => ipcRenderer.invoke('extract-nodejs'),
   configureNpm: (registry) => ipcRenderer.invoke('configure-npm', registry),
   installOpenCode: () => ipcRenderer.invoke('install-opencode'),
