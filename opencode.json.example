@@ -1,0 +1,65 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "volcengine/doubao-seed-1-8-251228",
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "ctx7sk-9778730a-8527-409d-bffb-68aca43fe6cd"
+      },
+      "enabled": true
+    },
+    "remotion-local": {
+      "type": "local",
+      "command": ["node", "/Users/fujd/Desktop/remotion/packages/mcp/dist/esm/index.mjs"],
+      "enabled": true
+    },
+    "url-catch": {
+      "type": "local",
+      "command": [
+        "uv",
+        "--directory",
+        "/Users/fujd/Desktop/同步目录/CCSkills/magic-html-plus-python/magic-html-plus-python-mcp",
+        "run",
+        "mcp_server.py"
+      ],
+      "enabled": true
+    }
+  },
+  "provider": {
+    "volcengine-1": {  // 这里必须和上一步的提供商 ID 完全一致！
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "VolcEngine",  // 在终端中显示的名称，可自定义
+      "options": {
+        "baseURL": "https://ark.cn-beijing.volces.com/api/v3",  
+        "apiKey": "afd96246-1a28-4413-9091-88ad5307a472" // 改为你自己的 API 令牌
+      },
+      "models": {
+        "doubao-seed-1-8-251228": {
+          "name": "doubao-seed-1-8-251228"
+        },
+        "doubao-seed-1-6-flash-250828": {
+          "name": "doubao-seed-1-6-flash-250828"
+        },
+        "kimi-k2-thinking-251104": {
+          "name": "kimi-k2-thinking-251104"
+        }
+        // 添加更多模型...
+      }
+    },
+    "volcengine-code": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "volcengine",
+      "options": {
+        "baseURL": "https://ark.cn-beijing.volces.com/api/coding/v3",
+        "apiKey": "afd96246-1a28-4413-9091-88ad5307a472"
+      },
+      "models": {
+        "ark-code-latest": {
+          "name": "ark-code-latest"
+        }
+      }
+    }
+  }
+}

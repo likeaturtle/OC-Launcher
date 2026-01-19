@@ -161,7 +161,20 @@
           <h2>OpenCode 软件配置</h2>
           <p class="subtitle">可视化编辑 OpenCode 配置文件</p>
         </div>
-        <div class="placeholder-content">
+
+        <div class="setup-steps">
+          <div class="setup-step">
+            <div class="step-header">
+              <span class="step-number"><i class="fas fa-file-code"></i></span>
+              <h3>生成默认配置文件</h3>
+            </div>
+            <p>为 OpenCode 生成默认的配置文件，存储在 <code>~/.config/opencode/opencode.json</code></p>
+            <button class="btn btn-primary" id="generate-config-btn">生成默认配置</button>
+            <div class="step-status" id="generate-config-status"></div>
+          </div>
+        </div>
+
+        <div class="placeholder-content" style="margin-top: 20px;">
           <div class="placeholder-icon"><i class="fas fa-file-alt"></i></div>
           <h3>配置编辑器</h3>
           <p>此功能将在未来版本中提供，用于可视化编辑 OpenCode 配置文件</p>

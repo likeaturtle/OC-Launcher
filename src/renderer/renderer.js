@@ -378,6 +378,30 @@ document.getElementById('reset-env-btn').addEventListener('click', async () => {
   btn.textContent = '重置环境';
 });
 
+// 生成 OpenCode 默认配置
+document.getElementById('generate-config-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('generate-config-btn');
+  const status = document.getElementById('generate-config-status');
+  
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+  status.className = 'step-status info';
+  status.textContent = '正在生成默认配置文件...';
+  
+  const result = await window.electronAPI.generateOpenCodeConfig();
+  
+  if (result.success) {
+    status.className = 'step-status success';
+    status.textContent = `✓ 配置文件已生成：${result.path}`;
+  } else {
+    status.className = 'step-status error';
+    status.textContent = '✗ 生成失败: ' + result.error;
+  }
+  
+  btn.disabled = false;
+  btn.textContent = '生成默认配置';
+});
+
 // 通知提示
 function showNotification(message, type = 'info') {
   // 简单实现，可以用更好的通知库

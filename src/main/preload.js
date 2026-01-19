@@ -14,5 +14,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   launchTUI: (workDir) => ipcRenderer.invoke('launch-tui', workDir),
   launchWeb: (data) => ipcRenderer.invoke('launch-web', data),
   onInstallProgress: (callback) => ipcRenderer.on('install-progress', (event, data) => callback(data)),
-  resetEnvironment: () => ipcRenderer.invoke('reset-environment')
+  resetEnvironment: () => ipcRenderer.invoke('reset-environment'),
+  generateOpenCodeConfig: () => ipcRenderer.invoke('generate-opencode-config')
 });

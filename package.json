@@ -5,11 +5,8 @@
   "main": "src/main/index.js",
   "scripts": {
     "start": "electron .",
-    "start:prod": "electron .",
     "dev": "electron . --dev",
     "build": "electron-builder --dir",
-    "clean:userdata:mac": "rm -rf ~/Library/Application\\ Support/opencode-launcher",
-    "clean:userdata:win": "if exist %APPDATA%\\opencode-launcher rmdir /s /q %APPDATA%\\opencode-launcher",
     "clean:userdata": "node -e \"const fs=require('fs');const path=require('path');const dir=path.join(process.platform==='win32'?process.env.APPDATA:path.join(require('os').homedir(),'Library/Application Support'),'opencode-launcher');if(fs.existsSync(dir))fs.rmSync(dir,{recursive:true,force:true});\"",
     "predist": "npm run clean:userdata",
     "predist:mac-arm64": "npm run clean:userdata",
@@ -38,6 +35,7 @@
   "devDependencies": {
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
+    "electron-rebuild": "^3.2.9",
     "electron-reload": "^2.0.0-alpha.1"
   },
   "dependencies": {
@@ -52,10 +50,9 @@
     },
     "files": [
       "src/**/*",
+      "opencode.json.example",
       "package.json"
     ],
-    "fileAssociations": [],
-    "protocols": [],
     "mac": {
       "target": [
         "dmg"

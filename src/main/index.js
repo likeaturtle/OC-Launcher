@@ -648,3 +648,55 @@ ipcMain.handle('reset-environment', async () => {
     return { success: false, error: error.message };
   }
 });
+
+ipcMain.handle('generate-opencode-config', async () => {
+  try {
+    const opencodeConfigDir = path.join(os.homedir(), '.config', 'opencode');
+    const opencodeConfigPath = path.join(opencodeConfigDir, 'opencode.json');
+    
+    // 检查配置文件是否已存在
+    if (fs.existsSync(opencodeConfigPath)) {
+      return { 
+        success: false, 
+        error: '配置文件已存在，请手动删除后再生成',
+        path: opencodeConfigPath 
+      };
+    }
+    
+    // 创建 .config/opencode 目录（如果不存在）
+    if (!fs.existsSync(opencodeConfigDir)) {
+      fs.mkdirSync(opencodeConfigDir, { recursive: true });
+    }
+    
+    // 读取模板文件
+    let templatePath;
+    if (app.isPackaged) {
+      // 生产环境：从 resources 目录读取
+      templatePath = path.join(process.resourcesPath, 'opencode.json.example');
+    } else {
+      // 开发环境：从项目根目录读取
+      templatePath = path.join(__dirname, '../../opencode.json.example');
+    }
+    
+    if (!fs.existsSync(templatePath)) {
+      return {
+        success: false,
+        error: '配置模板文件不存在'
+      };
+    }
+    
+    // 读取并复制模板内容
+    const templateContent = fs.readFileSync(templatePath, 'utf8');
+    fs.writeFileSync(opencodeConfigPath, templateContent, 'utf8');
+    
+    return { 
+      success: true, 
+      path: opencodeConfigPath 
+    };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error.message 
+    };
+  }
+});

@@ -52,7 +52,7 @@ OpenCode Launcher 是一个为 [OpenCode](https://opencode.ai/) 打造的独立�
 - 内置多个国内镜像源（阿里、腾讯、华为）
 - 支持一键切换官方源或自定义源
 - 大幅提升国内用户安装速度
-- 默认使用阿里镜像源（https://registry.npmmirror.com）
+- 默认使用阿里镜像源：https://registry.npmmirror.com
 
 #### 6. **可扩展架构**
 - 预留配置管理、MCP 服务器、Skills 配置页面
