@@ -15,5 +15,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   launchWeb: (data) => ipcRenderer.invoke('launch-web', data),
   onInstallProgress: (callback) => ipcRenderer.on('install-progress', (event, data) => callback(data)),
   resetEnvironment: () => ipcRenderer.invoke('reset-environment'),
-  generateOpenCodeConfig: () => ipcRenderer.invoke('generate-opencode-config')
+  generateOpenCodeConfig: (options) => ipcRenderer.invoke('generate-opencode-config', options),
+  getOpenCodeConfig: () => ipcRenderer.invoke('get-opencode-config'),
+  saveOpenCodeConfig: (config) => ipcRenderer.invoke('save-opencode-config', config),
+  onConfigChange: (callback) => ipcRenderer.on('opencode-config-changed', () => callback())
 });

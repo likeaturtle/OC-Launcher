@@ -6,6 +6,8 @@ const os = require('os');
 const tar = require('tar');
 const AdmZip = require('adm-zip');
 
+let configWatcher = null;
+
 // 开发环境启用热重载
 if (!app.isPackaged) {
   require('electron-reload')(path.join(__dirname, '..'), {
@@ -39,7 +41,6 @@ function initConfig() {
     const defaultConfig = {
       npmRegistry: '',
       workDir: '',
-      webPort: 4096,
       nodejsExtracted: false,
       opencodeInstalled: false
     };
@@ -47,9 +48,9 @@ function initConfig() {
     return defaultConfig;
   }
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-  // 兼容旧配置，添加默认端口
-  if (!config.webPort) {
-    config.webPort = 4096;
+  
+  if (!config.modelMetadata) {
+    config.modelMetadata = {};
   }
   return config;
 }
@@ -383,7 +384,7 @@ export PATH="${nodeBinPath}:$PATH"
 }
 
 // 启动 OpenCode Web
-function launchOpenCodeWeb(workDir, port = 4096) {
+function launchOpenCodeWeb(workDir) {
   const opencodePath = path.join(OPENCODE_PATH, process.platform === 'win32' ? 'opencode.cmd' : 'bin/opencode');
   const nodeBinPath = path.join(NODEJS_PATH, 'bin');
   
@@ -393,7 +394,7 @@ function launchOpenCodeWeb(workDir, port = 4096) {
     const scriptContent = `#!/bin/bash
 cd "${workDir}"
 export PATH="${nodeBinPath}:$PATH"
-"${opencodePath}" web --port ${port} --hostname 127.0.0.1
+"${opencodePath}" web
 `;
     fs.writeFileSync(tmpScript, scriptContent, { mode: 0o755 });
     
@@ -415,7 +416,7 @@ export PATH="${nodeBinPath}:$PATH"
     // OpenCode web 会自动打开浏览器，不需要手动打开
   } else if (process.platform === 'win32') {
     // Windows: 使用 start 命令，/MAX 参数最大化窗口
-    const command = `start "OpenCode Web" /MAX cmd /k "cd /d \"${workDir}\" && set PATH=${path.join(NODEJS_PATH)};%PATH% && \"${opencodePath}\" web --port ${port} --hostname 127.0.0.1"`;
+    const command = `start "OpenCode Web" /MAX cmd /k "cd /d \"${workDir}\" && set PATH=${path.join(NODEJS_PATH)};%PATH% && \"${opencodePath}\" web"`;
     require('child_process').exec(command, (error) => {
       if (error) {
         console.error('启动 Web 失败:', error);
@@ -456,6 +457,43 @@ function createWindow() {
   if (process.argv.includes('--dev')) {
     mainWindow.webContents.openDevTools();
   }
+
+  // 监控 opencode.json 文件变化
+  setupConfigWatcher();
+}
+
+function setupConfigWatcher() {
+  const configPath = path.join(os.homedir(), '.config', 'opencode', 'opencode.json');
+  const configDir = path.dirname(configPath);
+
+  if (configWatcher) {
+    configWatcher.close();
+  }
+
+  // 如果目录不存在，先创建它，否则无法监控
+  if (!fs.existsSync(configDir)) {
+    try {
+      fs.mkdirSync(configDir, { recursive: true });
+    } catch (e) {
+      console.error('无法创建配置目录:', e);
+      return;
+    }
+  }
+
+  // 监控目录以便捕捉文件的创建、删除和修改
+  let debounceTimer;
+  configWatcher = fs.watch(configDir, (eventType, filename) => {
+    if (filename === 'opencode.json') {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (mainWindow) {
+          mainWindow.webContents.send('opencode-config-changed');
+        }
+      }, 500); // 500ms 防抖
+    }
+  });
+
+  console.log('已启动 opencode.json 监控');
 }
 
 app.whenReady().then(() => {
@@ -619,9 +657,9 @@ ipcMain.handle('launch-tui', (event, workDir) => {
   }
 });
 
-ipcMain.handle('launch-web', (event, { workDir, port }) => {
+ipcMain.handle('launch-web', (event, { workDir }) => {
   try {
-    launchOpenCodeWeb(workDir, port);
+    launchOpenCodeWeb(workDir);
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
@@ -644,9 +682,9 @@ ipcMain.handle('reset-environment', async () => {
     const defaultConfig = {
       npmRegistry: '',
       workDir: '',
-      webPort: 4096,
       nodejsExtracted: false,
-      opencodeInstalled: false
+      opencodeInstalled: false,
+      modelMetadata: {}
     };
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2));
     
@@ -656,16 +694,16 @@ ipcMain.handle('reset-environment', async () => {
   }
 });
 
-ipcMain.handle('generate-opencode-config', async () => {
+ipcMain.handle('generate-opencode-config', async (event, { force = false } = {}) => {
   try {
     const opencodeConfigDir = path.join(os.homedir(), '.config', 'opencode');
     const opencodeConfigPath = path.join(opencodeConfigDir, 'opencode.json');
     
     // 检查配置文件是否已存在
-    if (fs.existsSync(opencodeConfigPath)) {
+    if (fs.existsSync(opencodeConfigPath) && !force) {
       return { 
         success: false, 
-        error: '配置文件已存在，请手动删除后再生成',
+        fileExists: true,
         path: opencodeConfigPath 
       };
     }
@@ -698,5 +736,28 @@ ipcMain.handle('generate-opencode-config', async () => {
       success: false, 
       error: error.message 
     };
+  }
+});
+
+ipcMain.handle('get-opencode-config', async () => {
+  try {
+    const opencodeConfigPath = path.join(os.homedir(), '.config', 'opencode', 'opencode.json');
+    if (fs.existsSync(opencodeConfigPath)) {
+      const content = fs.readFileSync(opencodeConfigPath, 'utf8');
+      return { success: true, config: JSON.parse(content) };
+    }
+    return { success: false, error: '配置文件不存在' };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('save-opencode-config', async (event, config) => {
+  try {
+    const opencodeConfigPath = path.join(os.homedir(), '.config', 'opencode', 'opencode.json');
+    fs.writeFileSync(opencodeConfigPath, JSON.stringify(config, null, 2), 'utf8');
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
   }
 });

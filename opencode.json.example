@@ -1,6 +1,12 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "volcengine/doubao-seed-1-8-251228",
+  "server": {
+    "port": 4096,
+    "hostname": "0.0.0.0",
+    "mdns": true,
+    "cors": ["http://localhost:5173"]
+  },
   "mcp": {
     "context7": {
       "type": "remote",
@@ -28,12 +34,12 @@
     }
   },
   "provider": {
-    "volcengine-1": {  // 这里必须和上一步的提供商 ID 完全一致！
+    "volcengine": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "VolcEngine",  // 在终端中显示的名称，可自定义
+      "name": "VolcEngine",
       "options": {
         "baseURL": "https://ark.cn-beijing.volces.com/api/v3",  
-        "apiKey": "afd96246-1a28-4413-9091-88ad5307a472" // 改为你自己的 API 令牌
+        "apiKey": "afd96246-1a28-4413-9091-88ad5307a472"
       },
       "models": {
         "doubao-seed-1-8-251228": {
@@ -45,7 +51,6 @@
         "kimi-k2-thinking-251104": {
           "name": "kimi-k2-thinking-251104"
         }
-        // 添加更多模型...
       }
     },
     "volcengine-code": {

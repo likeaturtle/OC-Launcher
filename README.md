@@ -7,13 +7,16 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Electron-28.0-blue" alt="Electron">
   <img src="https://img.shields.io/badge/Node.js-22.22.0-green" alt="Node.js">
-  <img src="https://img.shields.io/badge/Version-0.1.0-orange" alt="Version">
+  <img src="https://img.shields.io/badge/Version-0.1.2-orange" alt="Version">
   <img src="https://img.shields.io/badge/License-AGPL%20v3-blue" alt="License">
 </p>
 
-## 📖 项目简介
+## 📖 项目简介 
 
 OpenCode Launcher 是一个为 [OpenCode](https://opencode.ai/) 打造的独立启动器，提供**完全隔离**的 Node.js 环境管理、图形化配置界面和一键启动功能。它解决了 OpenCode 需要手动配置 Node.js 环境、npm 源设置繁琐、命令行操作复杂等痛点。
+
+欢迎使用 DeepWiki 了解本项目，点击[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/likeaturtle/OC-Launcher)
+深入探索！
 
 ### 🎯 项目定位
 

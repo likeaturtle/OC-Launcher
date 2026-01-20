@@ -172,12 +172,69 @@
             <button class="btn btn-primary" id="generate-config-btn">生成默认配置</button>
             <div class="step-status" id="generate-config-status"></div>
           </div>
-        </div>
 
-        <div class="placeholder-content" style="margin-top: 20px;">
-          <div class="placeholder-icon"><i class="fas fa-file-alt"></i></div>
-          <h3>配置编辑器</h3>
-          <p>此功能将在未来版本中提供，用于可视化编辑 OpenCode 配置文件</p>
+          <div class="setup-step">
+            <div class="step-header">
+              <span class="step-number"><i class="fas fa-cubes"></i></span>
+              <h3>第三方模型管理</h3>
+            </div>
+            
+            <div class="model-section">
+              <h4>已添加模型信息</h4>
+              <div class="model-table-container">
+                <table class="model-table">
+                  <thead>
+                    <tr>
+                      <th>默认</th>
+                      <th>Provider ID</th>
+                      <th>模型命名</th>
+                      <th>模型名称</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="model-list-body">
+                    <tr>
+                      <td colspan="5" style="text-align: center; color: #858585;">正在加载模型信息...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="model-section" style="margin-top: 20px; border-top: 1px solid #3c3c3c; padding-top: 20px;">
+              <h4>新增第三方模型</h4>
+              <div class="input-grid" style="margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="input-item">
+                  <label for="new-provider-id">Provider ID</label>
+                  <input type="text" id="new-provider-id" placeholder="例如: volcengine" list="provider-datalist">
+                  <datalist id="provider-datalist"></datalist>
+                </div>
+                <div class="input-item">
+                  <label for="new-model-alias">模型命名</label>
+                  <input type="text" id="new-model-alias" placeholder="例如: VolcEngine">
+                </div>
+                <div class="input-item">
+                  <label for="new-model-name">模型名称</label>
+                  <input type="text" id="new-model-name" placeholder="例如: doubao-pro">
+                </div>
+                <div class="input-item">
+                  <label for="new-base-url">Base URL</label>
+                  <input type="text" id="new-base-url" placeholder="API 请求地址">
+                </div>
+                <div class="input-item" style="grid-column: span 2;">
+                  <label for="new-api-key">API Key</label>
+                  <input type="password" id="new-api-key" placeholder="API 令牌密钥">
+                </div>
+              </div>
+              <div class="button-group" style="display: flex; gap: 10px; justify-content: space-between; align-items: center;">
+                <div style="display: flex; gap: 10px;">
+                  <button class="btn btn-primary" id="add-model-btn">添加模型</button>
+                  <button class="btn btn-secondary" id="clear-model-btn">清空内容</button>
+                </div>
+                <button class="btn btn-link" id="open-parse-modal-btn" style="font-size: 0.9em; padding: 5px 10px;"><i class="fas fa-magic"></i> 智能解析</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -214,26 +271,84 @@
           <p class="subtitle">管理 OC-Launcher 应用设置</p>
         </div>
         
-        <div class="setup-steps">
-          <div class="setup-step">
-            <div class="step-header">
-              <span class="icon"><i class="fas fa-globe"></i></span>
-              <h3>OpenCode Web 服务设置</h3>
-            </div>
-            <div class="web-options" style="margin-top: 0; border: none; padding: 0;">
-              <label>
-                Web 端口号：
-                <input type="number" id="web-port" value="4096" min="1024" max="65535">
-              </label>
-            </div>
-            <p class="input-hint" style="margin-top: 10px;"><i class="fas fa-lightbulb"></i> 修改端口号后，下次启动 Web 服务时生效</p>
-          </div>
+        <div class="placeholder-content">
+          <div class="placeholder-icon"><i class="fas fa-cog"></i></div>
+          <h3>通用设置</h3>
+          <p>此功能将在未来版本中提供更多选项，目前 Web 服务端口等配置已移至 opencode.json 控制</p>
         </div>
       </div>
     </main>
   </div>
 
   <div id="custom-tooltip" class="tooltip"></div>
+
+  <!-- 修改模型弹窗 -->
+  <div id="edit-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>修改模型信息</h3>
+        <button class="modal-close" id="close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="input-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <input type="hidden" id="edit-old-provider-id">
+          <input type="hidden" id="edit-old-model-name">
+          
+          <div class="input-item">
+            <label>Provider ID</label>
+            <input type="text" id="edit-provider-id">
+          </div>
+          <div class="input-item">
+            <label>模型命名</label>
+            <input type="text" id="edit-model-alias">
+          </div>
+          <div class="input-item">
+            <label>模型名称</label>
+            <input type="text" id="edit-model-name">
+          </div>
+          <div class="input-item">
+            <label>Base URL</label>
+            <input type="text" id="edit-base-url">
+          </div>
+          <div class="input-item" style="grid-column: span 2;">
+            <label>API Key</label>
+            <input type="password" id="edit-api-key">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancel-edit">取消</button>
+        <button class="btn btn-primary" id="save-edit">保存修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 智能解析弹窗 -->
+  <div id="parse-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>智能解析示例代码</h3>
+        <button class="modal-close" id="close-parse-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 10px; color: #cccccc; font-size: 0.9em;">将包含 base_url 和 model 的示例代码（如 Python/OpenAI SDK 代码）粘贴到下方：</p>
+        <textarea id="parse-code-input" style="width: 100%; height: 200px; background: #1e1e1e; border: 1px solid #3c3c3c; color: #ffffff; padding: 10px; border-radius: 4px; resize: vertical; font-family: 'Consolas', 'Monaco', monospace;" placeholder="例如:
+client = OpenAI(
+    api_key='your_key',
+    base_url='https://api.example.com/v1'
+)
+completion = client.chat.completions.create(
+    model='gpt-3.5-turbo',
+    ...
+)"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancel-parse">取消</button>
+        <button class="btn btn-primary" id="confirm-parse">确认解析</button>
+      </div>
+    </div>
+  </div>
+
   <script src="renderer.js"></script>
 </body>
 </html>
