@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
@@ -431,7 +431,7 @@ export PATH="${nodeBinPath}:$PATH"
 }
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
+  const windowOptions = {
     width: 1000,
     height: 700,
     webPreferences: {
@@ -441,7 +441,14 @@ function createWindow() {
     },
     backgroundColor: '#1e1e1e',
     titleBarStyle: 'hiddenInset'
-  });
+  };
+
+  // 仅在 Windows 上显式设置窗口图标，macOS 会自动使用应用图标
+  if (process.platform === 'win32') {
+    windowOptions.icon = path.join(__dirname, '../icon/icon.ico');
+  }
+
+  mainWindow = new BrowserWindow(windowOptions);
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   
@@ -669,14 +676,7 @@ ipcMain.handle('generate-opencode-config', async () => {
     }
     
     // 读取模板文件
-    let templatePath;
-    if (app.isPackaged) {
-      // 生产环境：从 resources 目录读取
-      templatePath = path.join(process.resourcesPath, 'opencode.json.example');
-    } else {
-      // 开发环境：从项目根目录读取
-      templatePath = path.join(__dirname, '../../opencode.json.example');
-    }
+    const templatePath = path.join(app.getAppPath(), 'opencode.json.example');
     
     if (!fs.existsSync(templatePath)) {
       return {

@@ -1,6 +1,6 @@
 {
   "name": "opencode-launcher",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OpenCode Launcher - Standalone OpenCode environment manager",
   "main": "src/main/index.js",
   "scripts": {
@@ -45,6 +45,7 @@
   "build": {
     "appId": "com.opencode.launcher",
     "productName": "OpenCode Launcher",
+    "icon": "src/icon/icon",
     "directories": {
       "output": "dist"
     },
