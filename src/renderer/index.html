@@ -13,7 +13,7 @@
     <nav class="sidebar">
       <div class="logo">
         <h1>OC-Launcher</h1>
-        <span class="version" id="app-version">App Version: Version Info</span>
+        <span class="version" id="app-version">版本号: 加载中……</span>
       </div>
       <ul class="nav-menu">
         <li class="nav-item active" data-page="home">
@@ -29,7 +29,7 @@
           <span>配置管理</span>
         </li>
         <li class="nav-item" data-page="models">
-          <span class="icon"><i class="fas fa-cubes"></i></span>
+          <span class="icon"><i class="fa-brands fa-artstation"></i></span>
           <span>模型管理</span>
         </li>
         <li class="nav-item" data-page="mcp">
@@ -172,8 +172,11 @@
               <span class="step-number"><i class="fas fa-file-code"></i></span>
               <h3>生成默认配置文件</h3>
             </div>
-            <p>为 OpenCode 生成默认的配置文件，存储在 <code>~/.config/opencode/opencode.json</code></p>
-            <button class="btn btn-primary" id="generate-config-btn">生成默认配置</button>
+            <p>为 OpenCode 生成默认配置文件，存储在 <code>~/.config/opencode/opencode.json</code></p>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn btn-primary" id="generate-config-btn">生成默认配置</button>
+              <button class="btn btn-secondary" id="open-config-dir-btn"><i class="fas fa-folder-open"></i> 打开配置目录</button>
+            </div>
             <div class="step-status" id="generate-config-status"></div>
           </div>
         </div>
@@ -189,13 +192,84 @@
         <div class="setup-steps">
           <div class="setup-step">
             <div class="step-header">
+              <span class="step-number"><i class="fas fa-key"></i></span>
+              <h3>OpenCode Zen 模型管理</h3>
+            </div>
+            
+            <!-- 第一部分: API Key 设置 -->
+            <div class="model-section">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <h4 style="margin: 0;">API Key 设置</h4>
+                <div id="zen-auth-status" style="display: none;">
+                  <p style="font-size: 12px; color: #4ec9b0; margin: 0; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-check-circle"></i>
+                    <span>已配置</span>
+                  </p>
+                </div>
+              </div>
+              <div id="zen-auth-key-display" style="margin-bottom: 15px; display: none;">
+                <p style="font-size: 12px; color: #858585; margin: 0; display: flex; align-items: center; gap: 6px;">
+                  <span>API Key 为</span>
+                  <button id="toggle-zen-key-btn" style="background: none; border: none; color: #858585; cursor: pointer; padding: 0; font-size: 13px; display: flex; align-items: center;">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <span id="zen-api-key-display" style="font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;">******</span>
+                </p>
+              </div>
+              <div class="input-item">
+                <label for="zen-api-key">OpenCode Zen API Key</label>
+                <div style="display: flex; gap: 10px; margin-bottom: 8px; width: 100%;">
+                  <input type="password" id="zen-api-key" placeholder="输入 OpenCode Zen API Key" style="flex: 1;">
+                  <button class="btn btn-primary" id="save-zen-auth-btn" style="white-space: nowrap;">确认</button>
+                </div>
+                <p class="input-hint" style="margin: 0;">
+                  访问 <a href="#" id="open-zen-link" style="color: #3794ff; text-decoration: none;">OpenCode Zen</a> 获取 API Key
+                </p>
+              </div>
+            </div>
+            
+            <!-- 第二部分: 模型信息 -->
+            <div class="model-section" style="margin-top: 20px; border-top: 1px solid #3c3c3c; padding-top: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h4 style="margin: 0;">OpenCode Zen 模型信息</h4>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                  <input type="text" id="zen-model-search" placeholder="搜索模型 ID" 
+                    style="padding: 8px 12px; background: #3c3c3c; border: 1px solid #555555; border-radius: 4px; color: #cccccc; font-size: 13px; width: 300px;">
+                </div>
+              </div>
+              <div id="zen-model-list-container" class="model-table-container" style="max-height: 300px;">
+                <table class="model-table">
+                  <thead>
+                    <tr>
+                      <th>默认</th>
+                      <th>模型 ID</th>
+                    </tr>
+                  </thead>
+                  <tbody id="zen-model-list-body">
+                    <tr>
+                      <td style="text-align: center; color: #858585;">正在加载模型信息……</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <div class="setup-step">
+            <div class="step-header">
               <span class="step-number"><i class="fas fa-cubes"></i></span>
               <h3>第三方模型管理</h3>
             </div>
             
             <div class="model-section">
-              <h4>已添加模型信息</h4>
-              <div class="model-table-container">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h4 style="margin: 0;">第三方模型信息</h4>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                  <input type="text" id="third-model-search" placeholder="搜索 PROVIDER ID / 模型名称" 
+                    style="padding: 8px 12px; background: #3c3c3c; border: 1px solid #555555; border-radius: 4px; color: #cccccc; font-size: 13px; width: 300px;">
+                </div>
+              </div>
+              <div class="model-table-container" style="max-height: 300px;">
                 <table class="model-table">
                   <thead>
                     <tr>
@@ -208,7 +282,7 @@
                   </thead>
                   <tbody id="model-list-body">
                     <tr>
-                      <td colspan="5" style="text-align: center; color: #858585;">正在加载模型信息...</td>
+                      <td colspan="5" style="text-align: center; color: #858585;">正在加载模型信息……</td>
                     </tr>
                   </tbody>
                 </table>

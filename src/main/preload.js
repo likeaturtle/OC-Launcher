@@ -18,5 +18,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   generateOpenCodeConfig: (options) => ipcRenderer.invoke('generate-opencode-config', options),
   getOpenCodeConfig: () => ipcRenderer.invoke('get-opencode-config'),
   saveOpenCodeConfig: (config) => ipcRenderer.invoke('save-opencode-config', config),
-  onConfigChange: (callback) => ipcRenderer.on('opencode-config-changed', () => callback())
+  saveOpenCodeAuth: (apiKey) => ipcRenderer.invoke('save-opencode-auth', apiKey),
+  getOpenCodeAuth: () => ipcRenderer.invoke('get-opencode-auth'),
+  showConfirmDialog: (options) => ipcRenderer.invoke('show-confirm-dialog', options),
+  getZenModels: () => ipcRenderer.invoke('get-zen-models'),
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  onConfigChange: (callback) => ipcRenderer.on('opencode-config-changed', () => callback()),
+  openConfigDirectory: () => ipcRenderer.invoke('open-config-directory')
 });

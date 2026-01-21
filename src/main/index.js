@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, nativeImage, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
@@ -756,6 +756,135 @@ ipcMain.handle('save-opencode-config', async (event, config) => {
   try {
     const opencodeConfigPath = path.join(os.homedir(), '.config', 'opencode', 'opencode.json');
     fs.writeFileSync(opencodeConfigPath, JSON.stringify(config, null, 2), 'utf8');
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('save-opencode-auth', async (event, apiKey) => {
+  try {
+    const authPath = path.join(os.homedir(), '.local', 'share', 'opencode', 'auth.json');
+    const authDir = path.dirname(authPath);
+
+    if (!fs.existsSync(authDir)) {
+      fs.mkdirSync(authDir, { recursive: true });
+    }
+
+    let authConfig = {};
+    if (fs.existsSync(authPath)) {
+      try {
+        const content = fs.readFileSync(authPath, 'utf8');
+        authConfig = JSON.parse(content);
+      } catch (e) {
+        console.error('解析 auth.json 失败:', e);
+      }
+    }
+
+    authConfig.opencode = {
+      type: 'api',
+      key: apiKey
+    };
+
+    fs.writeFileSync(authPath, JSON.stringify(authConfig, null, 2), 'utf8');
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-opencode-auth', async () => {
+  try {
+    const authPath = path.join(os.homedir(), '.local', 'share', 'opencode', 'auth.json');
+    if (fs.existsSync(authPath)) {
+      const content = fs.readFileSync(authPath, 'utf8');
+      const authConfig = JSON.parse(content);
+      if (authConfig.opencode && authConfig.opencode.key) {
+        return { success: true, apiKey: authConfig.opencode.key };
+      }
+    }
+    return { success: false };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('show-confirm-dialog', async (event, options) => {
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: 'warning',
+    buttons: ['确认', '取消'],
+    defaultId: 0,
+    cancelId: 1,
+    title: options.title || '确认',
+    message: options.message,
+    detail: options.detail || ''
+  });
+  return result.response === 0;
+});
+
+ipcMain.handle('open-external', async (event, url) => {
+  try {
+    await shell.openExternal(url);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-zen-models', async () => {
+  try {
+    console.log('[API] 正在获取 OpenCode Zen 模型列表……');
+    
+    // 检查 fetch 是否可用
+    if (typeof fetch !== 'function') {
+      throw new Error('当前环境不支持 fetch，请升级应用或检查配置');
+    }
+
+    const response = await fetch('https://opencode.ai/zen/v1/models', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      // 增加超时控制
+      signal: AbortSignal.timeout(10000) 
+    });
+    
+    if (!response.ok) {
+      throw new Error(`网络请求失败 (HTTP ${response.status})`);
+    }
+    
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('服务器返回了无效的数据格式');
+    }
+
+    const data = await response.json();
+    console.log('[API] 模型列表获取成功:', Array.isArray(data) ? `${data.length} 个模型` : '格式非数组');
+    
+    return { success: true, data };
+  } catch (error) {
+    console.error('[API] 获取模型列表异常:', error);
+    let errorMsg = '网络连接失败或服务器响应异常';
+    
+    if (error.name === 'TimeoutError') {
+      errorMsg = '请求超时，请检查您的网络连接';
+    } else if (error.message) {
+      errorMsg = error.message;
+    }
+    
+    return { success: false, error: errorMsg };
+  }
+});
+
+ipcMain.handle('open-config-directory', async () => {
+  try {
+    const configDir = path.join(os.homedir(), '.config', 'opencode');
+    
+    // 确保目录存在
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+    
+    // 使用 shell.openPath 打开目录
+    await shell.openPath(configDir);
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };

@@ -30,7 +30,7 @@ async function initialize() {
   
   // 更新版本号显示
   const version = await window.electronAPI.getAppVersion();
-  document.getElementById('app-version').textContent = `App Version: v${version}`;
+  document.getElementById('app-version').textContent = `版本号：v${version}`;
   
   // 恢复工作目录
   if (config.workDir) {
@@ -45,11 +45,171 @@ async function initialize() {
   }
   
   // 监听 opencode.json 变化
-  window.electronAPI.onConfigChange(() => {
-    console.log('检测到 opencode.json 变化，正在刷新模型列表...');
-    loadModels();
+  window.electronAPI.onConfigChange(async () => {
+    console.log('检测到 opencode.json 变化，正在刷新模型列表……');
+    await loadModels(); // 内部会更新 currentOpenCodeConfig
+    await loadZenModels(); // 现在可以确保使用更新后的 currentOpenCodeConfig
+  });
+
+  // 加载 OpenCode Zen 认证状态
+  await loadZenAuthStatus();
+
+  // 加载 OpenCode Zen 模型信息
+  await loadZenModels();
+}
+
+// 全局变量存储所有 Zen 模型，用于搜索过滤
+let allZenModels = [];
+
+// 全局变量存储所有第三方模型，用于搜索过滤
+let allThirdPartyModels = [];
+
+// 加载 OpenCode Zen 模型信息
+async function loadZenModels() {
+  const tbody = document.getElementById('zen-model-list-body');
+  
+  // 保存当前内容，避免每次刷新配置都重新加载导致的闪烁感（如果是从配置文件变化触发的）
+  const isInitialLoad = tbody.innerHTML.includes('正在加载模型信息');
+  if (isInitialLoad) {
+    tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: #858585;"><i class="fas fa-spinner fa-spin"></i> 正在加载模型信息……</td></tr>';
+  }
+  
+  try {
+    const result = await window.electronAPI.getZenModels();
+    
+    if (result.success) {
+      let models = [];
+      if (Array.isArray(result.data)) {
+        models = result.data;
+      } else if (result.data && Array.isArray(result.data.models)) {
+        models = result.data.models;
+      } else if (result.data && Array.isArray(result.data.data)) {
+        models = result.data.data;
+      }
+
+      allZenModels = models; // 保存到全局变量供搜索使用
+      renderZenModels(models);
+    } else {
+      const errorMsg = result.error || '无法连接到模型服务，请检查网络设置';
+      tbody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: #f48771;">加载失败: ${errorMsg}</td></tr>`;
+    }
+  } catch (error) {
+    tbody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: #f48771;">加载异常: ${error.message}</td></tr>`;
+  }
+}
+
+// 渲染 Zen 模型列表（提取为独立函数以支持搜索过滤）
+function renderZenModels(models) {
+  const tbody = document.querySelector('#zen-model-list-container tbody');
+  
+  if (models.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: #858585;">暂无可用模型</td></tr>';
+    return;
+  }
+  
+  const currentModel = currentOpenCodeConfig ? currentOpenCodeConfig.model : '';
+  
+  tbody.innerHTML = models.map(model => {
+    const modelId = model.Id || model.id || 'Unknown';
+    const isDefault = currentModel === `opencode/${modelId}`;
+    return `
+      <tr>
+        <td style="text-align: center; width: 60px;">
+          <input type="radio" name="default-model" class="zen-default-model-radio" 
+            data-model="${modelId}" ${isDefault ? 'checked' : ''} title="设为默认模型">
+        </td>
+        <td style="font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;">${modelId}</td>
+      </tr>
+    `;
+  }).join('');
+
+  // 绑定单选框事件
+  document.querySelectorAll('.zen-default-model-radio').forEach(radio => {
+    radio.onchange = async (e) => {
+      const mId = radio.dataset.model;
+      await setDefaultModel('opencode', mId);
+    };
   });
 }
+
+// 加载 OpenCode Zen 认证状态
+let currentZenApiKey = '';
+async function loadZenAuthStatus() {
+  const result = await window.electronAPI.getOpenCodeAuth();
+  const statusDiv = document.getElementById('zen-auth-status');
+  const keyDisplayDiv = document.getElementById('zen-auth-key-display');
+  const displaySpan = document.getElementById('zen-api-key-display');
+  
+  if (result.success && result.apiKey) {
+    currentZenApiKey = result.apiKey;
+    statusDiv.style.display = 'block';
+    keyDisplayDiv.style.display = 'block';
+    displaySpan.textContent = '******';
+    displaySpan.dataset.visible = 'false';
+    document.querySelector('#toggle-zen-key-btn i').className = 'fas fa-eye';
+  } else {
+    currentZenApiKey = '';
+    statusDiv.style.display = 'none';
+    keyDisplayDiv.style.display = 'none';
+  }
+}
+
+// 切换 API Key 显示/隐藏
+document.getElementById('toggle-zen-key-btn').addEventListener('click', () => {
+  const displaySpan = document.getElementById('zen-api-key-display');
+  const icon = document.querySelector('#toggle-zen-key-btn i');
+  const isVisible = displaySpan.dataset.visible === 'true';
+  
+  if (isVisible) {
+    displaySpan.textContent = '******';
+    displaySpan.dataset.visible = 'false';
+    icon.className = 'fas fa-eye';
+  } else {
+    displaySpan.textContent = currentZenApiKey;
+    displaySpan.dataset.visible = 'true';
+    icon.className = 'fas fa-eye-slash';
+  }
+});
+
+// OpenCode Zen 模型搜索
+document.getElementById('zen-model-search').addEventListener('input', (e) => {
+  const keyword = e.target.value.trim().toLowerCase();
+  
+  if (!keyword) {
+    // 清空搜索关键词时，显示所有模型
+    renderZenModels(allZenModels);
+    return;
+  }
+  
+  // 过滤模型
+  const filteredModels = allZenModels.filter(model => {
+    const modelId = (model.Id || model.id || '').toLowerCase();
+    return modelId.includes(keyword);
+  });
+  
+  renderZenModels(filteredModels);
+});
+
+// 第三方模型搜索
+document.getElementById('third-model-search').addEventListener('input', (e) => {
+  const keyword = e.target.value.trim().toLowerCase();
+  
+  if (!keyword) {
+    // 清空搜索关键词时，显示所有模型
+    renderThirdPartyModels(allThirdPartyModels);
+    return;
+  }
+  
+  // 过滤模型（搜索 Provider ID、Provider 名称、模型 ID）
+  const filteredModels = allThirdPartyModels.filter(model => {
+    const providerId = (model.providerId || '').toLowerCase();
+    const providerName = (model.providerName || '').toLowerCase();
+    const modelId = (model.modelId || '').toLowerCase();
+    return providerId.includes(keyword) || providerName.includes(keyword) || modelId.includes(keyword);
+  });
+  
+  renderThirdPartyModels(filteredModels);
+});
 
 // 更新状态显示
 async function updateStatus() {
@@ -238,9 +398,9 @@ document.getElementById('extract-nodejs-btn').addEventListener('click', async ()
   const status = document.getElementById('nodejs-extract-status');
   
   btn.disabled = true;
-  btn.textContent = '解压中...';
+  btn.textContent = '解压中……';
   status.className = 'step-status info';
-  status.textContent = '正在解压 Node.js 运行时...';
+  status.textContent = '正在解压 Node.js 运行时……';
   
   const result = await window.electronAPI.extractNodejs();
   
@@ -278,9 +438,9 @@ document.getElementById('configure-npm-btn').addEventListener('click', async () 
   const status = document.getElementById('npm-config-status');
   
   btn.disabled = true;
-  btn.textContent = '配置中...';
+  btn.textContent = '配置中……';
   status.className = 'step-status info';
-  status.textContent = '正在配置 npm 源...';
+  status.textContent = '正在配置 npm 源……';
   
   const result = await window.electronAPI.configureNpm(registry);
   
@@ -305,9 +465,9 @@ document.getElementById('install-opencode-btn').addEventListener('click', async 
   const logDiv = document.getElementById('install-log');
   
   btn.disabled = true;
-  btn.textContent = '安装中...';
+  btn.textContent = '安装中……';
   status.className = 'step-status info';
-  status.textContent = '正在安装 OpenCode，请稍候...';
+  status.textContent = '正在安装 OpenCode，请稍候……';
   logDiv.classList.add('active');
   logDiv.textContent = '';
   
@@ -345,15 +505,15 @@ document.getElementById('reset-env-btn').addEventListener('click', async () => {
   const status = document.getElementById('reset-env-status');
   
   btn.disabled = true;
-  btn.textContent = '重置中...';
+  btn.textContent = '重置中……';
   status.className = 'step-status info';
-  status.textContent = '正在清空用户数据目录...';
+  status.textContent = '正在清空用户数据目录……';
   
   const result = await window.electronAPI.resetEnvironment();
   
   if (result.success) {
     status.className = 'step-status success';
-    status.textContent = '✓ 环境重置成功！页面将在 2 秒后重新加载...';
+    status.textContent = '✓ 环境重置成功！页面将在 2 秒后重新加载……';
     
     // 重置本地配置状态
     config.nodejsExtracted = false;
@@ -385,9 +545,9 @@ document.getElementById('generate-config-btn').addEventListener('click', async (
   const status = document.getElementById('generate-config-status');
   
   btn.disabled = true;
-  btn.textContent = '生成中...';
+  btn.textContent = '生成中……';
   status.className = 'step-status info';
-  status.textContent = '正在生成默认配置文件...';
+  status.textContent = '正在生成默认配置文件……';
   
   const result = await window.electronAPI.generateOpenCodeConfig();
   
@@ -400,11 +560,11 @@ document.getElementById('generate-config-btn').addEventListener('click', async (
     // 配置文件已存在，询问用户是否覆盖
     const confirmText = '配置文件已存在，继续操作将对已有配置文件进行覆盖，该操作不可撤销，是否继续？';
     status.className = 'step-status info';
-    status.textContent = '配置文件已存在，等待确认...';
+    status.textContent = '配置文件已存在，等待确认……';
     
     if (confirm(confirmText)) {
       // 用户确认覆盖，强制生成
-      status.textContent = '正在覆盖配置文件...';
+      status.textContent = '正在覆盖配置文件……';
       const forceResult = await window.electronAPI.generateOpenCodeConfig({ force: true });
       
       if (forceResult.success) {
@@ -430,12 +590,22 @@ document.getElementById('generate-config-btn').addEventListener('click', async (
   }
 });
 
+// 打开配置目录
+document.getElementById('open-config-dir-btn').addEventListener('click', async () => {
+  const result = await window.electronAPI.openConfigDirectory();
+  if (result.success) {
+    showNotification('已打开配置目录', 'success');
+  } else {
+    showNotification('打开失败: ' + result.error, 'error');
+  }
+});
+
 // 加载模型信息
 async function loadModels() {
   const modelListBody = document.getElementById('model-list-body');
   if (!modelListBody) return;
 
-  modelListBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #858585;">正在加载模型信息...</td></tr>';
+  modelListBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #858585;">正在加载模型信息……</td></tr>';
   
   const result = await window.electronAPI.getOpenCodeConfig();
   
@@ -472,66 +642,77 @@ async function loadModels() {
         return timeB - timeA;
       });
 
-      allModels.forEach(model => {
-        const isDefault = result.config.model === `${model.providerId}/${model.modelId}`;
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td style="text-align: center;">
-            <input type="radio" name="default-model" class="default-model-radio" 
-              data-provider="${model.providerId}" data-model="${model.modelId}" 
-              ${isDefault ? 'checked' : ''} title="设为默认模型">
-          </td>
-          <td>${model.providerId}</td>
-          <td>${model.providerName}</td>
-          <td>${model.modelId}</td>
-          <td>
-            <div class="action-buttons">
-              <button class="btn-link btn-edit" data-provider="${model.providerId}" data-model="${model.modelId}" title="修改模型"><i class="fas fa-edit"></i></button>
-              <button class="btn-link btn-delete" data-provider="${model.providerId}" data-model="${model.modelId}" title="删除模型"><i class="fas fa-trash-alt"></i></button>
-            </div>
-          </td>
-        `;
-        modelListBody.appendChild(row);
-      });
-      
-      if (allModels.length === 0) {
-        modelListBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #858585;">暂无模型信息</td></tr>';
-      } else {
-        // 绑定单选框事件
-        document.querySelectorAll('.default-model-radio').forEach(radio => {
-          radio.onchange = async (e) => {
-            const pId = radio.dataset.provider;
-            const mId = radio.dataset.model;
-            await setDefaultModel(pId, mId);
-          };
-        });
-
-        // 绑定编辑按钮事件
-        document.querySelectorAll('.btn-edit').forEach(btn => {
-          btn.onclick = (e) => {
-            const pId = btn.dataset.provider;
-            const mId = btn.dataset.model;
-            openEditModal(pId, mId);
-          };
-        });
-
-        // 绑定删除按钮事件
-        document.querySelectorAll('.btn-delete').forEach(btn => {
-          btn.onclick = async (e) => {
-            const pId = btn.dataset.provider;
-            const mId = btn.dataset.model;
-            if (confirm(`确定要删除模型 ${mId} 吗？`)) {
-              await deleteModel(pId, mId);
-            }
-          };
-        });
-      }
+      allThirdPartyModels = allModels; // 保存到全局变量供搜索使用
+      renderThirdPartyModels(allModels);
     } else {
       modelListBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #858585;">暂无提供商信息</td></tr>';
     }
   } else {
     modelListBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #f48771;">${result.error || '无法加载配置文件'}</td></tr>`;
   }
+}
+
+// 渲染第三方模型列表（提取为独立函数以支持搜索过滤）
+function renderThirdPartyModels(models) {
+  const modelListBody = document.getElementById('model-list-body');
+  const result = { config: currentOpenCodeConfig };
+  
+  if (models.length === 0) {
+    modelListBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #858585;">暂无模型信息</td></tr>';
+    return;
+  }
+  
+  modelListBody.innerHTML = '';
+  models.forEach(model => {
+    const isDefault = result.config.model === `${model.providerId}/${model.modelId}`;
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td style="text-align: center;">
+        <input type="radio" name="default-model" class="default-model-radio" 
+          data-provider="${model.providerId}" data-model="${model.modelId}" 
+          ${isDefault ? 'checked' : ''} title="设为默认模型">
+      </td>
+      <td>${model.providerId}</td>
+      <td>${model.providerName}</td>
+      <td>${model.modelId}</td>
+      <td>
+        <div class="action-buttons">
+          <button class="btn-link btn-edit" data-provider="${model.providerId}" data-model="${model.modelId}" title="修改模型"><i class="fas fa-edit"></i></button>
+          <button class="btn-link btn-delete" data-provider="${model.providerId}" data-model="${model.modelId}" title="删除模型"><i class="fas fa-trash-alt"></i></button>
+        </div>
+      </td>
+    `;
+    modelListBody.appendChild(row);
+  });
+  
+  // 绑定单选框事件
+  document.querySelectorAll('.default-model-radio').forEach(radio => {
+    radio.onchange = async (e) => {
+      const pId = radio.dataset.provider;
+      const mId = radio.dataset.model;
+      await setDefaultModel(pId, mId);
+    };
+  });
+
+  // 绑定编辑按钮事件
+  document.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.onclick = (e) => {
+      const pId = btn.dataset.provider;
+      const mId = btn.dataset.model;
+      openEditModal(pId, mId);
+    };
+  });
+
+  // 绑定删除按钮事件
+  document.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.onclick = async (e) => {
+      const pId = btn.dataset.provider;
+      const mId = btn.dataset.model;
+      if (confirm(`确定要删除模型 ${mId} 吗？`)) {
+        await deleteModel(pId, mId);
+      }
+    };
+  });
 }
 
 // 更新 Provider 自动完成列表
@@ -884,6 +1065,42 @@ function parseModelCode(code) {
   
   return result;
 }
+
+// OpenCode Zen 认证管理
+document.getElementById('save-zen-auth-btn').addEventListener('click', async () => {
+  const apiKey = document.getElementById('zen-api-key').value.trim();
+  
+  if (!apiKey) {
+    showNotification('请输入 API Key', 'error');
+    return;
+  }
+
+  // 如果已存在 Key，进行二次确认
+  if (currentZenApiKey) {
+    const confirmed = await window.electronAPI.showConfirmDialog({
+      title: '覆盖确认',
+      message: '点击确认后将覆盖OpenCode Zen已有 API Key，请谨慎操作',
+      detail: '此操作将更新本地 auth.json 配置文件。'
+    });
+    
+    if (!confirmed) return;
+  }
+
+  const result = await window.electronAPI.saveOpenCodeAuth(apiKey);
+  if (result.success) {
+    showNotification('OpenCode Zen API Key 已保存', 'success');
+    document.getElementById('zen-api-key').value = ''; // 清空输入框
+    await loadZenAuthStatus(); // 刷新状态显示
+  } else {
+    showNotification('保存失败: ' + result.error, 'error');
+  }
+});
+
+// 处理外部链接跳转
+document.getElementById('open-zen-link').addEventListener('click', (e) => {
+  e.preventDefault();
+  window.electronAPI.openExternal('https://opencode.ai/auth');
+});
 
 // 通知提示
 function showNotification(message, type = 'info') {
