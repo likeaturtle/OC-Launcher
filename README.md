@@ -1,4 +1,5 @@
-<h1 style="text-align: center; margin-bottom: 20px;">OpenCode Launcher</h1>
+<h1 align="center">OpenCode Launcher</h1>
+
 <p align="center">
   <strong>基于 Electron 的 OpenCode AI 独立环境管理器</strong>
 </p>
