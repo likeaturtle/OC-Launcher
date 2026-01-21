@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   extractNodejs: () => ipcRenderer.invoke('extract-nodejs'),
   configureNpm: (registry) => ipcRenderer.invoke('configure-npm', registry),
   installOpenCode: () => ipcRenderer.invoke('install-opencode'),
+  uninstallOpenCode: () => ipcRenderer.invoke('uninstall-opencode'),
+  installOpenCodeVersion: (version) => ipcRenderer.invoke('install-opencode-version', version),
   selectDirectory: () => ipcRenderer.invoke('select-directory'),
   launchTUI: (workDir) => ipcRenderer.invoke('launch-tui', workDir),
   launchWeb: (data) => ipcRenderer.invoke('launch-web', data),

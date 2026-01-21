@@ -297,7 +297,7 @@ function configureNpmRegistry(registry) {
 }
 
 // 安装 OpenCode
-function installOpenCode() {
+function installOpenCode(version) {
   return new Promise((resolve, reject) => {
     ensureNodejsPermissions();
     const { nodePath, npmCliPath, nodeBinPath } = getNodeExecutionPaths();
@@ -310,7 +310,8 @@ function installOpenCode() {
     env.PATH = env[pathKey];
     env.Path = env[pathKey];
     
-    const child = spawn(nodePath, [npmCliPath, 'install', '-g', 'opencode-ai', '--prefix', OPENCODE_PATH], {
+    const packageName = version ? `opencode-ai@${version}` : 'opencode-ai';
+    const child = spawn(nodePath, [npmCliPath, 'install', '-g', packageName, '--prefix', OPENCODE_PATH], {
       env
     });
     
@@ -321,17 +322,64 @@ function installOpenCode() {
     let output = '';
     child.stdout.on('data', (data) => {
       output += data.toString();
-      mainWindow.webContents.send('install-progress', data.toString());
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('install-progress', data.toString());
+      }
     });
     
     child.stderr.on('data', (data) => {
       output += data.toString();
-      mainWindow.webContents.send('install-progress', data.toString());
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('install-progress', data.toString());
+      }
     });
     
     child.on('close', (code) => {
       if (code === 0) resolve(output);
       else reject(new Error(`Installation failed with code ${code}\n${output}`));
+    });
+  });
+}
+
+// 卸载 OpenCode
+function uninstallOpenCode() {
+  return new Promise((resolve, reject) => {
+    ensureNodejsPermissions();
+    const { nodePath, npmCliPath, nodeBinPath } = getNodeExecutionPaths();
+
+    const env = { ...process.env };
+    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+    const currentPath = env[pathKey] || env.PATH || env.Path || '';
+    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
+    env.PATH = env[pathKey];
+    env.Path = env[pathKey];
+
+    const child = spawn(nodePath, [npmCliPath, 'uninstall', '-g', 'opencode-ai', '--prefix', OPENCODE_PATH], {
+      env
+    });
+
+    child.on('error', (err) => {
+      reject(err);
+    });
+
+    let output = '';
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('install-progress', data.toString());
+      }
+    });
+
+    child.stderr.on('data', (data) => {
+      output += data.toString();
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('install-progress', data.toString());
+      }
+    });
+
+    child.on('close', (code) => {
+      if (code === 0) resolve(output);
+      else reject(new Error(`Uninstall failed with code ${code}\n${output}`));
     });
   });
 }
@@ -566,9 +614,16 @@ ipcMain.handle('check-opencode', async () => {
   let version = null;
   if (installed) {
     try {
-      const { nodePath } = getNodeExecutionPaths();
-      // 使用独立 Node.js 运行 opencode -v
-      version = require('child_process').execSync(`"${nodePath}" "${opencodePath}" -v`).toString().trim();
+      const { nodeBinPath } = getNodeExecutionPaths();
+      const childProcess = require('child_process');
+      const env = { ...process.env };
+      const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+      const currentPath = env[pathKey] || env.PATH || env.Path || '';
+      env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
+      env.PATH = env[pathKey];
+      env.Path = env[pathKey];
+      // 直接执行 opencode，可同时兼容二进制和 JS 版本
+      version = childProcess.execSync(`"${opencodePath}" -v`, { env }).toString().trim();
     } catch (e) {
       console.error('[OpenCode] 获取版本号失败:', e);
     }
@@ -630,6 +685,30 @@ ipcMain.handle('install-opencode', async () => {
     await installOpenCode();
     const config = initConfig();
     config.opencodeInstalled = true;
+    saveConfig(config);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('install-opencode-version', async (event, version) => {
+  try {
+    await installOpenCode(version);
+    const config = initConfig();
+    config.opencodeInstalled = true;
+    saveConfig(config);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('uninstall-opencode', async () => {
+  try {
+    await uninstallOpenCode();
+    const config = initConfig();
+    config.opencodeInstalled = false;
     saveConfig(config);
     return { success: true };
   } catch (error) {

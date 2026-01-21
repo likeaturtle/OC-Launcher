@@ -51,6 +51,15 @@ async function initialize() {
     await loadZenModels(); // 现在可以确保使用更新后的 currentOpenCodeConfig
   });
 
+  // 安装/卸载 OpenCode 日志监听
+  const installLogDiv = document.getElementById('install-log');
+  window.electronAPI.onInstallProgress((data) => {
+    if (!installLogDiv) return;
+    installLogDiv.classList.add('active');
+    installLogDiv.textContent += data;
+    installLogDiv.scrollTop = installLogDiv.scrollHeight;
+  });
+
   // 加载 OpenCode Zen 认证状态
   await loadZenAuthStatus();
 
@@ -468,14 +477,10 @@ document.getElementById('install-opencode-btn').addEventListener('click', async 
   btn.textContent = '安装中……';
   status.className = 'step-status info';
   status.textContent = '正在安装 OpenCode，请稍候……';
-  logDiv.classList.add('active');
-  logDiv.textContent = '';
-  
-  // 监听安装进度
-  window.electronAPI.onInstallProgress((data) => {
-    logDiv.textContent += data;
-    logDiv.scrollTop = logDiv.scrollHeight;
-  });
+  if (logDiv) {
+    logDiv.classList.add('active');
+    logDiv.textContent = '';
+  }
   
   const result = await window.electronAPI.installOpenCode();
   
@@ -491,8 +496,118 @@ document.getElementById('install-opencode-btn').addEventListener('click', async 
     btn.disabled = false;
   }
   
-  btn.textContent = '安装 OpenCode';
+  btn.textContent = '安装 / 更新 OpenCode';
 });
+
+// 卸载 OpenCode
+const uninstallBtn = document.getElementById('uninstall-opencode-btn');
+if (uninstallBtn) {
+  uninstallBtn.addEventListener('click', async () => {
+    const status = document.getElementById('opencode-install-status');
+    const logDiv = document.getElementById('install-log');
+
+    const confirmText = '确定要卸载当前已安装的 OpenCode 吗？';
+    if (!confirm(confirmText)) {
+      return;
+    }
+
+    uninstallBtn.disabled = true;
+    uninstallBtn.textContent = '卸载中……';
+    status.className = 'step-status info';
+    status.textContent = '正在卸载 OpenCode，请稍候……';
+    if (logDiv) {
+      logDiv.classList.add('active');
+      logDiv.textContent = '';
+    }
+
+    const result = await window.electronAPI.uninstallOpenCode();
+
+    if (result.success) {
+      status.className = 'step-status success';
+      status.textContent = '✓ OpenCode 卸载成功！';
+      config.opencodeInstalled = false;
+      updateStatus();
+      updateLaunchButtons();
+    } else {
+      status.className = 'step-status error';
+      status.textContent = '✗ 卸载失败: ' + result.error;
+    }
+
+    uninstallBtn.disabled = false;
+    uninstallBtn.textContent = '卸载 OpenCode';
+  });
+}
+
+// 安装指定版本 OpenCode
+const installVersionBtn = document.getElementById('install-opencode-version-btn');
+const versionInput = document.getElementById('opencode-version-input');
+
+if (installVersionBtn && versionInput) {
+  // 按钮初始样式：根据输入内容决定是否“可用”
+  function updateInstallVersionButtonState() {
+    const hasVersion = !!versionInput.value.trim();
+    if (hasVersion) {
+      installVersionBtn.classList.remove('disabled');
+    } else {
+      installVersionBtn.classList.add('disabled');
+    }
+  }
+
+  updateInstallVersionButtonState();
+
+  // 输入内容变化时，动态更新按钮状态
+  versionInput.addEventListener('input', () => {
+    updateInstallVersionButtonState();
+  });
+
+  installVersionBtn.addEventListener('click', async (event) => {
+    // 点击在输入框上时不触发安装，只是编辑内容
+    if (event.target === versionInput) {
+      return;
+    }
+
+    const status = document.getElementById('opencode-install-status');
+    const logDiv = document.getElementById('install-log');
+    const version = versionInput.value.trim();
+
+    // 没填版本号时，将焦点移到输入框
+    if (!version) {
+      versionInput.focus();
+      return;
+    }
+
+    // 检查版本号格式：必须为 数字.数字.数字
+    const versionPattern = /^\d+\.\d+\.\d+$/;
+    if (!versionPattern.test(version)) {
+      alert('版本号格式不正确，请输入类似 1.1.28 的版本号（数字.数字.数字）');
+      versionInput.focus();
+      return;
+    }
+
+    installVersionBtn.classList.add('disabled');
+    status.className = 'step-status info';
+    status.textContent = `正在安装 OpenCode ${version}，请稍候……`;
+    if (logDiv) {
+      logDiv.classList.add('active');
+      logDiv.textContent = '';
+    }
+
+    const result = await window.electronAPI.installOpenCodeVersion(version);
+
+    if (result.success) {
+      status.className = 'step-status success';
+      status.textContent = `✓ OpenCode ${version} 安装成功！`;
+      config.opencodeInstalled = true;
+      updateStatus();
+      updateLaunchButtons();
+    } else {
+      status.className = 'step-status error';
+      status.textContent = '✗ 安装失败: ' + result.error;
+    }
+
+    updateInstallVersionButtonState();
+  });
+}
 
 // 重置环境
 document.getElementById('reset-env-btn').addEventListener('click', async () => {

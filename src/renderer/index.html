@@ -133,13 +133,21 @@
           <div class="setup-step">
             <div class="step-header">
               <span class="step-number"><i class="fas fa-cloud-download-alt"></i></span>
-              <h3>安装 OpenCode</h3>
+              <h3>安装 / 更新 OpenCode</h3>
             </div>
-            <p>使用独立 Node.js 环境安装 OpenCode</p>
-            <button class="btn btn-primary" id="install-opencode-btn">安装 OpenCode</button>
+            <p>使用独立 Node.js 环境安装 / 更新 OpenCode</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+              <button class="btn btn-primary" id="install-opencode-btn">安装 / 更新 OpenCode</button>
+              <button class="btn btn-secondary" id="uninstall-opencode-btn">卸载 OpenCode</button>
+              <button class="btn btn-secondary" id="install-opencode-version-btn" style="display: inline-flex; align-items: center; gap: 8px;">
+                <span style="white-space: nowrap;">安装指定版本 OpenCode</span>
+                <input type="text" id="opencode-version-input" placeholder="如 1.1.28" style="border: dotted; background: transparent; color: inherit; padding: 2px 4px; width: 70px;">
+              </button>
+            </div>
             <div class="step-status" id="opencode-install-status"></div>
             <div class="install-log" id="install-log"></div>
           </div>
+
 
           <div class="setup-divider">
             <span class="divider-text">高危行为 谨慎操作</span>
