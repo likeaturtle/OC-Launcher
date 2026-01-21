@@ -16,8 +16,8 @@ document.querySelectorAll('.nav-item').forEach(item => {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(`page-${page}`).classList.add('active');
 
-    // 如果切换到配置页面，加载模型信息
-    if (page === 'config') {
+    // 如果切换到模型管理页面，加载模型信息
+    if (page === 'models') {
       loadModels();
     }
   });
