@@ -1,0 +1,29 @@
+{  
+  "anthropic": {  
+    "type": "oauth",  
+    "refresh": "refresh_token_here",  
+    "access": "access_token_here",   
+    "expires": 1704067200000,  
+    "accountId": "account_123456",  
+    "enterpriseUrl": "https://api.anthropic.com"  
+  },  
+  "openrouter": {  
+    "type": "api",  
+    "key": "sk-or-v1-your-api-key-here"  
+  },  
+  "github-copilot": {  
+    "type": "oauth",  
+    "refresh": "github_refresh_token",  
+    "access": "github_access_token",  
+    "expires": 1704067200000  
+  },  
+  "https://example.com": {  
+    "type": "wellknown",  
+    "key": "ENV_VAR_NAME",  
+    "token": "stored_token_value"  
+  },  
+  "my-custom-provider": {  
+    "type": "api",  
+    "key": "custom-provider-api-key"  
+  }  
+}

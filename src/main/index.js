@@ -481,7 +481,7 @@ export PATH="${nodeBinPath}:$PATH"
 
 function createWindow() {
   const windowOptions = {
-    width: 1000,
+    width: 1050,
     height: 700,
     webPreferences: {
       nodeIntegration: false,
@@ -964,6 +964,72 @@ ipcMain.handle('open-config-directory', async () => {
     
     // 使用 shell.openPath 打开目录
     await shell.openPath(configDir);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('generate-auth-file', async (event, { force = false } = {}) => {
+  try {
+    const authDir = process.platform === 'win32'
+      ? path.join(os.homedir(), '.local', 'share', 'opencode')
+      : path.join(os.homedir(), '.local', 'share', 'opencode');
+    const authPath = path.join(authDir, 'auth.json');
+    
+    // 检查文件是否已存在
+    if (fs.existsSync(authPath) && !force) {
+      return { 
+        success: false, 
+        fileExists: true,
+        path: authPath 
+      };
+    }
+    
+    // 创建目录（如果不存在）
+    if (!fs.existsSync(authDir)) {
+      fs.mkdirSync(authDir, { recursive: true });
+    }
+    
+    // 读取模板文件
+    const templatePath = path.join(app.getAppPath(), 'auth.json.example');
+    
+    if (!fs.existsSync(templatePath)) {
+      return {
+        success: false,
+        error: '鉴权模板文件不存在'
+      };
+    }
+    
+    // 读取并复制模板内容
+    const templateContent = fs.readFileSync(templatePath, 'utf8');
+    fs.writeFileSync(authPath, templateContent, 'utf8');
+    
+    return { 
+      success: true, 
+      path: authPath 
+    };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error.message 
+    };
+  }
+});
+
+ipcMain.handle('open-auth-directory', async () => {
+  try {
+    const authDir = process.platform === 'win32'
+      ? path.join(os.homedir(), '.local', 'share', 'opencode')
+      : path.join(os.homedir(), '.local', 'share', 'opencode');
+    
+    // 确保目录存在
+    if (!fs.existsSync(authDir)) {
+      fs.mkdirSync(authDir, { recursive: true });
+    }
+    
+    // 使用 shell.openPath 打开目录
+    await shell.openPath(authDir);
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };

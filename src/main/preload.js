@@ -26,5 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getZenModels: () => ipcRenderer.invoke('get-zen-models'),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
   onConfigChange: (callback) => ipcRenderer.on('opencode-config-changed', () => callback()),
-  openConfigDirectory: () => ipcRenderer.invoke('open-config-directory')
+  openConfigDirectory: () => ipcRenderer.invoke('open-config-directory'),
+  generateAuthFile: (options) => ipcRenderer.invoke('generate-auth-file', options),
+  openAuthDirectory: () => ipcRenderer.invoke('open-auth-directory')
 });

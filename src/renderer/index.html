@@ -45,10 +45,25 @@
           <span>通用设置</span>
         </li>
       </ul>
+      <div class="sidebar-footer">
+        <a href="https://github.com/likeaturtle/OC-Launcher" class="footer-link" target="_blank" title="GitHub">
+          <i class="fab fa-github"></i>
+        </a>
+        <a href="https://learnopencode.com/" class="footer-link" target="_blank" title="Learn OpenCode">
+          <img src="../icon/icon.svg" alt="OC-Launcher" class="footer-icon-img">
+        </a>
+        <a href="https://opencode.ai/" class="footer-link" target="_blank" title="OpenCode">
+          <img src="../icon/opencode.svg" alt="OpenCode" class="footer-icon-img footer-opencode-icon">
+        </a>
+      </div>
     </nav>
 
     <!-- 主内容区 -->
     <main class="main-content">
+      <!-- 顶部拖拽遮罩 -->
+      <div class="drag-mask"></div>
+      <!-- 顶部滚动遮罩 -->
+      <div class="scroll-mask-top"></div>
       <!-- 首页 -->
       <div class="page active" id="page-home">
         <div class="page-header">
@@ -170,7 +185,7 @@
       <!-- 配置管理页 -->
       <div class="page" id="page-config">
         <div class="page-header">
-          <h2>OpenCode 软件配置</h2>
+          <h2>OpenCode 配置文件</h2>
           <p class="subtitle">可视化编辑 OpenCode 配置文件</p>
         </div>
 
@@ -178,14 +193,27 @@
           <div class="setup-step">
             <div class="step-header">
               <span class="step-number"><i class="fas fa-file-code"></i></span>
-              <h3>生成默认配置文件</h3>
+              <h3>配置文件（config.json）</h3>
             </div>
             <p>为 OpenCode 生成默认配置文件，存储在 <code>~/.config/opencode/opencode.json</code></p>
             <div style="display: flex; gap: 10px;">
-              <button class="btn btn-primary" id="generate-config-btn">生成默认配置</button>
-              <button class="btn btn-secondary" id="open-config-dir-btn"><i class="fas fa-folder-open"></i> 打开配置目录</button>
+              <button class="btn btn-primary" id="generate-config-btn">生成默认配置文件</button>
+              <button class="btn btn-secondary" id="open-config-dir-btn"><i class="fas fa-folder-open"></i> 打开配置文件目录</button>
             </div>
             <div class="step-status" id="generate-config-status"></div>
+          </div>
+
+          <div class="setup-step">
+            <div class="step-header">
+              <span class="step-number"><i class="fas fa-key"></i></span>
+              <h3>鉴权文件（auth.json）</h3>
+            </div>
+            <p>为 OpenCode 生成默认鉴权文件，存储在 <code>~/.local/share/opencode/auth.json</code></p>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn btn-primary" id="generate-auth-btn">生成默认鉴权文件</button>
+              <button class="btn btn-secondary" id="open-auth-dir-btn"><i class="fas fa-folder-open"></i> 打开鉴权文件目录</button>
+            </div>
+            <div class="step-status" id="generate-auth-status"></div>
           </div>
         </div>
       </div>

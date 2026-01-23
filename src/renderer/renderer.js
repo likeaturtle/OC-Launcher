@@ -3,6 +3,27 @@ let config = null;
 let currentWorkDir = '';
 let currentOpenCodeConfig = null;
 
+// 主内容区滚动条显示控制
+let scrollTimer = null;
+const mainContent = document.querySelector('.main-content');
+
+if (mainContent) {
+  mainContent.addEventListener('scroll', () => {
+    // 添加 scrolling 类，显示滚动条
+    mainContent.classList.add('scrolling');
+    
+    // 清除之前的计时器
+    if (scrollTimer) {
+      clearTimeout(scrollTimer);
+    }
+    
+    // 滚动停止 1 秒后隐藏滚动条
+    scrollTimer = setTimeout(() => {
+      mainContent.classList.remove('scrolling');
+    }, 1000);
+  });
+}
+
 // 页面切换
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
@@ -710,6 +731,67 @@ document.getElementById('open-config-dir-btn').addEventListener('click', async (
   const result = await window.electronAPI.openConfigDirectory();
   if (result.success) {
     showNotification('已打开配置目录', 'success');
+  } else {
+    showNotification('打开失败: ' + result.error, 'error');
+  }
+});
+
+// 生成鉴权文件
+document.getElementById('generate-auth-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('generate-auth-btn');
+  const status = document.getElementById('generate-auth-status');
+  
+  btn.disabled = true;
+  btn.textContent = '生成中……';
+  status.className = 'step-status info';
+  status.textContent = '正在生成默认鉴权文件……';
+  
+  const result = await window.electronAPI.generateAuthFile();
+  
+  if (result.success) {
+    status.className = 'step-status success';
+    status.textContent = `✓ 鉴权文件已生成：${result.path}`;
+    btn.disabled = false;
+    btn.textContent = '生成默认鉴权文件';
+  } else if (result.fileExists) {
+    // 配置文件已存在，询问用户是否覆盖
+    const confirmText = '鉴权文件已存在，继续操作将对已有鉴权文件进行覆盖，该操作不可撤销，是否继续？';
+    status.className = 'step-status info';
+    status.textContent = '鉴权文件已存在，等待确认……';
+    
+    if (confirm(confirmText)) {
+      // 用户确认覆盖，强制生成
+      status.textContent = '正在覆盖鉴权文件……';
+      const forceResult = await window.electronAPI.generateAuthFile({ force: true });
+      
+      if (forceResult.success) {
+        status.className = 'step-status success';
+        status.textContent = `✓ 鉴权文件已生成：${forceResult.path}`;
+      } else {
+        status.className = 'step-status error';
+        status.textContent = '✗ 生成失败: ' + forceResult.error;
+      }
+    } else {
+      // 用户取消操作
+      status.className = 'step-status';
+      status.textContent = '';
+    }
+    
+    btn.disabled = false;
+    btn.textContent = '生成默认鉴权文件';
+  } else {
+    status.className = 'step-status error';
+    status.textContent = '✗ 生成失败: ' + result.error;
+    btn.disabled = false;
+    btn.textContent = '生成默认鉴权文件';
+  }
+});
+
+// 打开鉴权文件目录
+document.getElementById('open-auth-dir-btn').addEventListener('click', async () => {
+  const result = await window.electronAPI.openAuthDirectory();
+  if (result.success) {
+    showNotification('已打开配置文件目录', 'success');
   } else {
     showNotification('打开失败: ' + result.error, 'error');
   }
