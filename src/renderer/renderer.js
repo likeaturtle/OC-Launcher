@@ -44,6 +44,19 @@ document.querySelectorAll('.nav-item').forEach(item => {
   });
 });
 
+// 底部图标点击事件 - 使用外部浏览器打开链接
+document.querySelectorAll('.footer-link').forEach(link => {
+  link.addEventListener('click', () => {
+    const url = link.dataset.url;
+    if (url) {
+      window.electronAPI.openExternal(url);
+    }
+  });
+  
+  // 添加鼠标样式
+  link.style.cursor = 'pointer';
+});
+
 // 初始化
 async function initialize() {
   config = await window.electronAPI.getConfig();

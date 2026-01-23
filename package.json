@@ -1,6 +1,6 @@
 {
   "name": "opencode-launcher",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "OpenCode Launcher - Standalone OpenCode environment manager",
   "main": "src/main/index.js",
   "scripts": {

@@ -606,14 +606,14 @@ body {
 }
 
 .step-number {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   background: #007acc;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #ffffff;
 }
