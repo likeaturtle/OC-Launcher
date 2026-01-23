@@ -7,13 +7,43 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Electron-28.0-blue" alt="Electron">
   <img src="https://img.shields.io/badge/Node.js-22.22.0-green" alt="Node.js">
-  <img src="https://img.shields.io/badge/Version-0.1.2-orange" alt="Version">
+  <img src="https://img.shields.io/badge/Version-0.1.3-orange" alt="Version">
   <img src="https://img.shields.io/badge/License-AGPL%20v3-blue" alt="License">
 </p>
 
 ## 🔍 快速了解
 欢迎使用 DeepWiki 了解本项目，点击[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/likeaturtle/OC-Launcher)
 深入探索！
+
+## 🆕 版本更新
+
+### v0.1.3 (2025-01-23)
+
+**新增功能：**
+- ✨ **配置管理**：新增配置管理页面
+  - 一键生成 OpenCode 默认配置文件（opencode.json）
+  - 一键生成 OpenCode 默认鉴权文件（auth.json）
+  - 快速打开配置文件所在目录
+  - 快速打开鉴权文件所在目录
+  - 配置文件实时监控，自动刷新模型列表
+
+- 🤖 **模型管理**：新增模型管理页面
+  - **OpenCode Zen 模型管理**：
+    - API Key 设置和验证
+    - 自动读取可用 Zen 模型列表
+    - 设置默认 Zen 模型
+    - 实时搜索和过滤模型
+  - **第三方模型管理**：
+    - 添加/删除第三方模型服务商
+    - 支持 OpenAI、Google、Anthropic、VolcEngine 等主流服务商
+    - 智能解析功能，自动填充常用服务商信息
+    - 设置默认第三方模型
+    - 实时搜索和过滤模型
+
+**体验优化：**
+- ✨ 优化用户界面和交互体验
+- ✨ 增强配置文件监控机制
+- ✨ 改进模型搜索和过滤功能
 
 
 ## 📖 项目简介 
@@ -25,7 +55,8 @@ OpenCode Launcher 是一个为 [OpenCode](https://opencode.ai/) 打造的独立�
 - **桌面应用程序**：基于 Electron 框架构建的跨平台桌面应用
 - **环境管理器**：为 OpenCode AI 提供独立、隔离的运行环境
 - **启动器**：图形化界面一键启动 TUI/Web 模式
-- **配置中心**：（预留）可视化管理 OpenCode 配置、MCP 服务器和 Skills
+- **配置中心**：可视化管理 OpenCode 配置文件和鉴权文件
+- **模型管理器**：集成 OpenCode Zen 和第三方模型服务商管理
 
 ### ✨ 核心创新点
 
@@ -60,9 +91,16 @@ OpenCode Launcher 是一个为 [OpenCode](https://opencode.ai/) 打造的独立�
 - 默认使用阿里镜像源：https://registry.npmmirror.com
 
 #### 6. **可扩展架构**
-- 预留配置管理、MCP 服务器、Skills 配置页面
+- 已实现：配置管理、模型管理页面
+- 预留：MCP 服务器、Skills 配置页面
 - 采用 Electron IPC 通信，主进程和渲染进程分离
 - 安全沙箱设计（contextIsolation + preload script）
+
+#### 7. **配置与模型管理**
+- 一键生成 OpenCode 配置文件和鉴权文件
+- 配置文件实时监控，自动刷新模型列表
+- 支持 OpenCode Zen 模型管理和第三方模型服务商配置
+- 智能解析功能快速配置常用服务商
 
 ## 🚀 功能特性
 
@@ -113,9 +151,33 @@ OpenCode Launcher 是一个为 [OpenCode](https://opencode.ai/) 打造的独立�
   - 多架构打包脚本
   - 交互式打包工具（`build-interactive.sh`）
 
+- **OpenCode 配置管理**
+  - 可视化生成 OpenCode 配置文件（`~/.config/opencode/opencode.json`）
+  - 一键打开配置文件所在目录
+  - 智能解析和填充默认配置项
+  - 配置文件实时监控和自动刷新
+
+- **鉴权文件管理**
+  - 可视化生成 OpenCode 鉴权文件（`~/.local/share/opencode/auth.json`）
+  - 一键打开鉴权文件所在目录
+  - 支持配置 OpenCode Zen API Key
+  - API Key 显示/隐藏切换功能
+
+- **模型管理**
+  - **OpenCode Zen 模型管理**：
+    - API Key 设置和验证
+    - 自动读取可用模型列表
+    - 设置默认模型
+    - 实时搜索和过滤模型
+  - **第三方模型管理**：
+    - 添加/删除第三方模型服务商（支持 OpenAI、Google、Anthropic、VolcEngine 等）
+    - 配置模型命名、Base URL 和 API Key
+    - 智能解析功能（自动填充常用服务商信息）
+    - 设置默认第三方模型
+    - 实时搜索和过滤模型
+
 ### 🚧 预留功能（待开发）
 
-- **OpenCode 配置管理**：可视化编辑 `~/.opencode/config.json`
 - **MCP 服务器管理**：添加/删除 MCP 服务器，OAuth 认证
 - **Skills 配置**：安装/卸载 Skills，配置参数
 
@@ -214,8 +276,8 @@ npm run dist:mac-x64    # Intel
 # 打包所有架构（arm64 + x64）
 npm run dist:mac-all
 
-# 输出文件：dist/OpenCode Launcher-0.1.0-macos-arm64.dmg（Apple Silicon）
-#         或 dist/OpenCode Launcher-0.1.0-macos-x64.dmg（Intel）
+# 输出文件：dist/OpenCode Launcher-0.1.3-macos-arm64.dmg（Apple Silicon）
+#         或 dist/OpenCode Launcher-0.1.3-macos-x64.dmg（Intel）
 ```
 
 **注意：**
@@ -245,8 +307,8 @@ npm run dist:win-arm64  # ARM64 Windows
 npm run dist:win-all
 
 # 输出文件：
-# - 安装版：dist/OpenCode Launcher Setup 0.1.0.exe
-# - 便携版：dist/OpenCode Launcher-0.1.0-windows-x64.zip
+# - 安装版：dist/OpenCode Launcher Setup 0.1.3.exe
+# - 便携版：dist/OpenCode Launcher-0.1.3-windows-x64.zip
 ```
 
 **注意：**
@@ -277,8 +339,8 @@ npm run dist:win-arm64
 npm run dist:win-all
 
 # 输出文件：
-# - 安装版：dist/OpenCode Launcher Setup 0.1.0.exe
-# - 便携版：dist/OpenCode Launcher-0.1.0-windows-x64.zip
+# - 安装版：dist/OpenCode Launcher Setup 0.1.3.exe
+# - 便携版：dist/OpenCode Launcher-0.1.3-windows-x64.zip
 ```
 
 **前置准备：**
@@ -329,7 +391,28 @@ npm run dist -- --mac
 - 安装过程会显示详细日志（约 3-5 分钟，视网络速度而定）
 - 看到 "✓ OpenCode 安装成功！" 后，环境设置完成
 
-#### 第二步：日常使用
+#### 第二步：配置管理（可选）
+
+1. 点击 **"配置管理"** 菜单
+2. 配置选项：
+   - **生成配置文件**：一键生成 OpenCode 默认配置文件
+   - **打开配置目录**：快速访问配置文件所在位置
+   - **生成鉴权文件**：创建默认鉴权配置
+   - **打开鉴权目录**：快速访问鉴权文件所在位置
+
+#### 第三步：模型管理（可选）
+
+1. 点击 **"模型管理"** 菜单
+2. 配置 OpenCode Zen 模型：
+   - 输入 OpenCode Zen API Key 并保存
+   - 查看可用模型列表
+   - 设置默认模型
+3. 配置第三方模型：
+   - 添加第三方模型服务商（如 OpenAI、Google、Anthropic 等）
+   - 使用智能解析功能快速填充配置
+   - 管理和删除已添加的模型
+
+#### 第四步：日常使用
 
 1. 回到 **"首页"**
 2. 点击 **"选择目录"** 选择您的项目工作目录
@@ -348,6 +431,15 @@ npm run dist -- --mac
 - **Web 模式**：浏览器访问，端口号可自定义，适合远程使用或不熟悉命令行的用户
 - **工作目录持久化**：自动记住上次选择的工作目录
 - **状态监控**：实时显示环境配置状态和应用版本号
+- **配置管理**：
+  - 一键生成 OpenCode 配置文件和鉴权文件
+  - 快速打开配置文件和鉴权文件所在目录
+  - 配置文件实时监控，自动刷新模型列表
+- **模型管理**：
+  - OpenCode Zen 模型配置和管理
+  - 第三方模型服务商添加和管理
+  - 智能解析功能快速配置常用服务商
+  - 实时搜索和过滤模型列表
 
 ### 常见问题
 
@@ -509,9 +601,12 @@ OC-Launcher/
 4. **多启动方式**：支持 TUI 和 Web 两种模式，Web 端口可自定义
 5. **国内优化**：内置多个国内镜像源（阿里、腾讯、华为），安装速度快
 6. **环境管理**：支持一键重置环境，方便故障排查
-7. **跨平台支持**：支持 macOS/Windows，5 种系统架构
-8. **可扩展性**：预留配置管理界面，支持未来功能扩展
-9. **开发友好**：交互式打包工具，版本号管理，开发/生产环境隔离
+7. **配置中心**：可视化管理 OpenCode 配置文件和鉴权文件，支持一键生成和目录访问
+8. **模型管理**：集成 OpenCode Zen 模型管理和第三方模型服务商配置，支持智能解析
+9. **实时监控**：配置文件自动监控和刷新，模型列表实时更新
+10. **跨平台支持**：支持 macOS/Windows，5 种系统架构
+11. **可扩展性**：预留 MCP 服务器和 Skills 管理界面，支持未来功能扩展
+12. **开发友好**：交互式打包工具，版本号管理，开发/生产环境隔离
 
 ## 📝 开发规范
 
