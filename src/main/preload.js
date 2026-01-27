@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('get-version'),
   saveConfig: (config) => ipcRenderer.invoke('save-config', config),
   checkNodejs: () => ipcRenderer.invoke('check-nodejs'),
+  checkNpm: () => ipcRenderer.invoke('check-npm'),
   getNpmRegistry: () => ipcRenderer.invoke('get-npm-registry'),
   checkOpenCode: () => ipcRenderer.invoke('check-opencode'),
   extractNodejs: () => ipcRenderer.invoke('extract-nodejs'),
@@ -33,5 +34,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onSkillInstallProgress: (callback) => ipcRenderer.on('skill-install-progress', (event, data) => callback(data)),
   checkSkillUpdate: (installDir) => ipcRenderer.invoke('check-skill-update', installDir),
   upgradeSkill: (installDir) => ipcRenderer.invoke('upgrade-skill', installDir),
-  searchSkill: (keyword) => ipcRenderer.invoke('search-skill', keyword)
+  searchSkill: (keyword) => ipcRenderer.invoke('search-skill', keyword),
+  analyzeSkills: () => ipcRenderer.invoke('analyze-skills'),
+  getGlobalSkillDir: () => ipcRenderer.invoke('get-global-skill-dir'),
+  openDirectory: (dirPath) => ipcRenderer.invoke('open-directory', dirPath),
+  openGlobalSkillsDirectory: () => ipcRenderer.invoke('open-global-skills-directory'),
+  openOpenCodeSkillsDirectory: () => ipcRenderer.invoke('open-opencode-skills-directory')
 });

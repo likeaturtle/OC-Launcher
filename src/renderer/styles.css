@@ -50,26 +50,88 @@ body {
   list-style: none;
   padding: 0 10px;
   -webkit-app-region: no-drag;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s ease;
+}
+
+/* 导航菜单滚动时显示滚动条 */
+.nav-menu:hover,
+.nav-menu.scrolling {
+  scrollbar-color: #424242 #252526;
+}
+
+/* WebKit 内核浏览器（Electron）滚动条隐藏与显示 */
+.nav-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nav-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-menu::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.nav-menu:hover::-webkit-scrollbar-track {
+  background: #252526;
+}
+
+.nav-menu:hover::-webkit-scrollbar-thumb,
+.nav-menu.scrolling::-webkit-scrollbar-thumb {
+  background: #424242;
+}
+
+.nav-menu:hover::-webkit-scrollbar-thumb:hover,
+.nav-menu.scrolling::-webkit-scrollbar-thumb:hover {
+  background: #4e4e4e;
 }
 
 .nav-item {
   display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+  color: #cccccc;
+  position: relative;
+}
+
+.nav-item-content {
+  display: flex;
   align-items: center;
   padding: 12px 15px;
-  margin-bottom: 5px;
   cursor: pointer;
   border-radius: 5px;
   transition: background 0.2s;
-  color: #cccccc;
 }
 
-.nav-item:hover {
+.nav-item:hover .nav-item-content {
   background: #2a2d2e;
 }
 
-.nav-item.active {
+.nav-item.active .nav-item-content {
   background: #094771;
   color: #ffffff;
+}
+
+.nav-item.expanded .nav-item-content {
+  background: #2a2d2e;
+}
+
+/* 禁用状态的导航项 */
+.nav-item.disabled .nav-item-content {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.nav-item.disabled:hover .nav-item-content {
+  background: transparent;
 }
 
 .nav-item .icon {
@@ -79,6 +141,55 @@ body {
   align-items: center;
   justify-content: center;
   width: 20px;
+}
+
+/* 下拉菜单样式 */
+.nav-submenu {
+  list-style: none;
+  padding: 5px 0 0 0;
+  margin: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.nav-item.expanded .nav-submenu {
+  max-height: 500px;
+}
+
+.submenu-item {
+  padding: 8px 15px 8px 45px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #858585;
+  font-size: 13px;
+  border-radius: 5px;
+  margin: 3px 15px;
+}
+
+.submenu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cccccc;
+  padding-left: 48px;
+}
+
+.submenu-item.active {
+  background: rgba(0, 122, 204, 0.3);
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* 禁用状态的子菜单项 */
+.submenu-item.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.submenu-item.disabled:hover {
+  background: transparent;
+  color: #858585;
+  padding-left: 45px;
 }
 
 /* 侧边栏底部图标 */
@@ -382,10 +493,10 @@ body {
 
 /* 按钮样式 */
 .btn {
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
   border-radius: 5px;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
   font-weight: 500;
@@ -665,7 +776,6 @@ body {
 }
 
 .step-status {
-  margin-top: 15px;
   padding: 10px;
   border-radius: 5px;
   font-size: 14px;
@@ -693,6 +803,18 @@ body {
   border: 1px solid #569cd6;
 }
 
+/* 弹窗内的状态提示框 - 扩大高度并支持滚动 */
+.modal .step-status {
+  min-height: 80px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 15px;
+  line-height: 1.6;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
 .preset-registries {
   display: grid;
   grid-template-columns: repeat(2, auto);
@@ -712,10 +834,18 @@ body {
   font-size: 12px;
   color: #4ec9b0;
   display: none;
+  min-height: 200px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .install-log.active {
   display: block;
+}
+
+/* 弹窗内的安装日志 - 自适应高度并确保滚动 */
+.modal .install-log {
+  overflow-y: auto;
 }
 
 /* 占位内容 */
@@ -783,6 +913,146 @@ body {
   max-height: 250px;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+/* OpenCode Zen 模型表格专用样式 */
+.zen-model-table-container {
+  max-height: 255px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.zen-model-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* 第1列：默认选择（左侧）- 10% - 使用更高优先级 */
+.zen-model-table.model-table th:nth-child(1),
+.zen-model-table.model-table td:nth-child(1) {
+  width: 10% !important;
+  text-align: center;
+  padding: 10px 5px;
+}
+
+/* 第2列：模型ID（左侧）- 40% - 使用更高优先级 */
+.zen-model-table.model-table th:nth-child(2),
+.zen-model-table.model-table td:nth-child(2) {
+  width: 40% !important;
+  text-align: left;
+  padding: 10px 15px;
+}
+
+/* 第3列：默认选择（右侧）- 10% - 使用更高优先级 */
+.zen-model-table.model-table th:nth-child(3),
+.zen-model-table.model-table td:nth-child(3) {
+  width: 10% !important;
+  text-align: center;
+  padding: 10px 5px;
+}
+
+/* 第4列：模型ID（右侧）- 40% - 使用更高优先级 */
+.zen-model-table.model-table th:nth-child(4),
+.zen-model-table.model-table td:nth-child(4) {
+  width: 40% !important;
+  text-align: left;
+  padding: 10px 15px;
+}
+
+/* 优化单选框样式 */
+.zen-model-table input[type="radio"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+/* 模型ID文本样式 */
+.zen-model-table td:nth-child(2),
+.zen-model-table td:nth-child(4) {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* 第三方模型表格专用样式 */
+.third-party-table-container {
+  max-height: 255px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.third-party-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* 第1列：默认选择 - 8% */
+.third-party-table.model-table th:nth-child(1),
+.third-party-table.model-table td:nth-child(1) {
+  width: 8% !important;
+  text-align: center;
+  padding: 10px 5px;
+}
+
+/* 第2列：Provider ID - 22% */
+.third-party-table.model-table th:nth-child(2),
+.third-party-table.model-table td:nth-child(2) {
+  width: 22% !important;
+  text-align: left;
+  padding: 10px 12px;
+}
+
+/* 第3列：模型命名 - 22% */
+.third-party-table.model-table th:nth-child(3),
+.third-party-table.model-table td:nth-child(3) {
+  width: 22% !important;
+  text-align: left;
+  padding: 10px 12px;
+}
+
+/* 第4列：模型名称 - 36% */
+.third-party-table.model-table th:nth-child(4),
+.third-party-table.model-table td:nth-child(4) {
+  width: 36% !important;
+  text-align: left;
+  padding: 10px 12px;
+}
+
+/* 第5列：操作 - 12% */
+.third-party-table.model-table th:nth-child(5),
+.third-party-table.model-table td:nth-child(5) {
+  width: 12% !important;
+  text-align: center;
+  padding: 10px 8px;
+  vertical-align: middle;
+}
+
+/* 优化单选框样式 */
+.third-party-table input[type="radio"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+/* 操作按钮样式 */
+.third-party-table .action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 文本样式 */
+.third-party-table td:nth-child(2),
+.third-party-table td:nth-child(3),
+.third-party-table td:nth-child(4) {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .model-table {
@@ -956,11 +1226,11 @@ body {
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 10px 20px 20px 20px;
 }
 
 .modal-footer {
-  padding: 15px 20px;
+  padding: 10px 20px;
   border-top: 1px solid #3c3c3c;
   display: flex;
   justify-content: flex-end;
@@ -1077,9 +1347,8 @@ body {
 /* Skill 安装进度弹窗样式 */
 .install-info {
   background: #252525;
-  padding: 12px;
+  padding: 8px 12px 12px 12px;
   border-radius: 4px;
-  margin-bottom: 15px;
 }
 
 .install-info p {
@@ -1087,6 +1356,10 @@ body {
   color: #cccccc;
   font-size: 13px;
   line-height: 1.6;
+}
+
+.install-info p:first-child {
+  margin-top: 0;
 }
 
 .install-info strong {

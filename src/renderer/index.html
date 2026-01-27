@@ -17,32 +17,74 @@
       </div>
       <ul class="nav-menu">
         <li class="nav-item active" data-page="home">
-          <span class="icon"><i class="fas fa-home"></i></span>
-          <span>首页</span>
+          <div class="nav-item-content">
+            <span class="icon"><i class="fas fa-home"></i></span>
+            <span>首页</span>
+          </div>
+          <ul class="nav-submenu">
+            <li class="submenu-item" data-target="home-status">环境状态</li>
+            <li class="submenu-item" data-target="home-workdir">工作目录</li>
+            <li class="submenu-item" data-target="home-actions">启动面板</li>
+          </ul>
         </li>
         <li class="nav-item" data-page="setup">
-          <span class="icon"><i class="fa-solid fa-bars-progress"></i></span>
-          <span>运行环境</span>
+          <div class="nav-item-content">
+            <span class="icon"><i class="fa-solid fa-bars-progress"></i></span>
+            <span>运行环境</span>
+          </div>
+          <ul class="nav-submenu">
+            <li class="submenu-item" data-target="setup-nodejs">Node.js 环境</li>
+            <li class="submenu-item" data-target="setup-npm">npm 源配置</li>
+            <li class="submenu-item" data-target="setup-opencode">OpenCode 安装</li>
+            <li class="submenu-item" data-target="setup-reset">重置环境</li>
+          </ul>
         </li>
         <li class="nav-item" data-page="config">
-          <span class="icon"><i class="fas fa-file-alt"></i></span>
-          <span>配置管理</span>
+          <div class="nav-item-content">
+            <span class="icon"><i class="fas fa-file-alt"></i></span>
+            <span>配置管理</span>
+          </div>
+          <ul class="nav-submenu">
+            <li class="submenu-item" data-target="config-opencode">配置文件</li>
+            <li class="submenu-item" data-target="config-auth">鉴权文件</li>
+            <li class="submenu-item" data-target="config-skills">Skills 文件</li>
+          </ul>
         </li>
         <li class="nav-item" data-page="models">
-          <span class="icon"><i class="fa-brands fa-artstation"></i></span>
-          <span>模型管理</span>
+          <div class="nav-item-content">
+            <span class="icon"><i class="fa-brands fa-artstation"></i></span>
+            <span>模型管理</span>
+          </div>
+          <ul class="nav-submenu">
+            <li class="submenu-item" data-target="models-zen">OpenCode Zen</li>
+            <li class="submenu-item" data-target="models-third">第三方模型</li>
+          </ul>
         </li>
-        <li class="nav-item" data-page="mcp">
-          <span class="icon"><i class="fa-solid fa-atom"></i></span>
-          <span>MCP 管理</span>
+        <li class="nav-item disabled" data-page="mcp">
+          <div class="nav-item-content">
+            <span class="icon"><i class="fa-solid fa-atom"></i></span>
+            <span>MCP 管理</span>
+          </div>
+          <ul class="nav-submenu">
+            <li class="submenu-item disabled" data-target="mcp-config">MCP 配置</li>
+            <li class="submenu-item disabled" data-target="mcp-servers">服务器管理</li>
+          </ul>
         </li>
         <li class="nav-item" data-page="skills">
-          <span class="icon"><i class="fa-solid fa-wand-magic-sparkles"></i></i></span>
-          <span>Skills 管理</span>
+          <div class="nav-item-content">
+            <span class="icon"><i class="fa-solid fa-wand-magic-sparkles"></i></i></span>
+            <span>Skills 管理</span>
+          </div>
+          <ul class="nav-submenu">
+            <li class="submenu-item" data-target="skills-search">Skills 查询</li>
+            <li class="submenu-item" data-target="skills-install">Skills 安装</li>
+          </ul>
         </li>
         <li class="nav-item" data-page="settings">
-          <span class="icon"><i class="fas fa-cog"></i></span>
-          <span>通用设置</span>
+          <div class="nav-item-content">
+            <span class="icon"><i class="fas fa-cog"></i></span>
+            <span>通用设置</span>
+          </div>
         </li>
       </ul>
       <div class="sidebar-footer">
@@ -71,10 +113,14 @@
           <p class="subtitle">简单、快速、便捷使用 OpenCode，基于独立使用环境避免全局污染</p>
         </div>
 
-        <div class="status-card">
+        <div class="status-card" id="home-status">
           <div class="status-item">
             <span class="status-label">Node.js 环境状态</span>
             <span class="status-value" id="nodejs-status">未检测</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">npm 状态</span>
+            <span class="status-value" id="npm-status">未检测</span>
           </div>
           <div class="status-item">
             <span class="status-label">npm 源</span>
@@ -86,7 +132,7 @@
           </div>
         </div>
 
-        <div class="work-dir-section">
+        <div class="work-dir-section" id="home-workdir">
           <h3><i class="fas fa-folder-open"></i> OpenCode 工作目录</h3>
           <div class="input-group">
             <input type="text" id="work-dir" placeholder="此处显示目录将作为 OpenCode 工作目录">
@@ -95,7 +141,7 @@
           <p class="input-hint"><i class="fas fa-lightbulb"></i> 可点击按钮选择，同时支持手动输入路径或拖拽上传</p>
         </div>
 
-        <div class="actions">
+        <div class="actions" id="home-actions">
           <button class="btn btn-streaming btn-large" id="launch-tui-btn" disabled>
             <span class="btn-icon"><i class="fas fa-terminal"></i></span>
             <span class="btn-text">启动 TUI 界面</span>
@@ -116,17 +162,16 @@
         </div>
 
         <div class="setup-steps">
-          <div class="setup-step">
+          <div class="setup-step" id="setup-nodejs">
             <div class="step-header">
               <span class="step-number"><i class="fa-brands fa-node-js"></i></span>
               <h3>Node.js 环境</h3>
             </div>
             <p>解压并配置独立的 Node.js 运行时（Node.js Runtime）。</p>
             <button class="btn btn-primary" id="extract-nodejs-btn">解压 Node.js</button>
-            <div class="step-status" id="nodejs-extract-status"></div>
           </div>
 
-          <div class="setup-step">
+          <div class="setup-step" id="setup-npm">
             <div class="step-header">
               <span class="step-number"><i class="fa-brands fa-npm"></i></i></span>
               <h3>npm 源配置</h3>
@@ -142,10 +187,9 @@
               </div>
             </div>
             <button class="btn btn-primary" id="configure-npm-btn">设置 npm 源</button>
-            <div class="step-status" id="npm-config-status"></div>
           </div>
 
-          <div class="setup-step">
+          <div class="setup-step" id="setup-opencode">
             <div class="step-header">
               <span class="step-number"><i class="fa-brands fa-instalod"></i></span>
               <h3>安装 / 更新 OpenCode</h3>
@@ -159,8 +203,6 @@
                 <input type="text" id="opencode-version-input" placeholder="如 1.1.28" style="border: dotted; background: transparent; color: inherit; padding: 2px 4px; width: 70px;">
               </button>
             </div>
-            <div class="step-status" id="opencode-install-status"></div>
-            <div class="install-log" id="install-log"></div>
           </div>
 
 
@@ -168,7 +210,7 @@
             <span class="divider-text">高危行为 谨慎操作</span>
           </div>
 
-          <div class="setup-step" style="border: 1px solid #d32f2f; background: rgba(211, 47, 47, 0.05);">
+          <div class="setup-step" id="setup-reset" style="border: 1px solid #d32f2f; background: rgba(211, 47, 47, 0.05);">
             <div class="step-header">
               <span class="step-number" style="background-color: #d32f2f;"><i class="fa-solid fa-bolt"></i></span>
               <h3 style="color: #d32f2f;">重置环境</h3>
@@ -177,7 +219,6 @@
               <p style="color: #d32f2f; margin-bottom: 0;">此操作将清空当前用户数据目录全部内容，操作不可逆请谨慎进行！</p>
               <button class="btn btn-primary" id="reset-env-btn" style="background-color: #d32f2f; border-color: #d32f2f;">重置环境</button>
             </div>
-            <div class="step-status" id="reset-env-status"></div>
           </div>
         </div>
       </div>
@@ -190,7 +231,7 @@
         </div>
 
         <div class="setup-steps">
-          <div class="setup-step">
+          <div class="setup-step" id="config-opencode">
             <div class="step-header">
               <span class="step-number"><i class="fas fa-file-code"></i></span>
               <h3>配置文件（config.json）</h3>
@@ -203,17 +244,29 @@
             <div class="step-status" id="generate-config-status"></div>
           </div>
 
-          <div class="setup-step">
+          <div class="setup-step" id="config-auth">
             <div class="step-header">
               <span class="step-number"><i class="fas fa-key"></i></span>
-              <h3>鉴权文件（auth.json）</h3>
+              <h3>鉴权文件(auth.json)</h3>
             </div>
-            <p>为 OpenCode 生成默认鉴权文件，存储在 <code>~/.local/share/opencode/auth.json</code></p>
+            <p>为 OpenCode 生成默认鉴权文件,存储在 <code>~/.local/share/opencode/auth.json</code></p>
             <div style="display: flex; gap: 10px;">
               <button class="btn btn-primary" id="generate-auth-btn">生成默认鉴权文件</button>
               <button class="btn btn-secondary" id="open-auth-dir-btn"><i class="fas fa-folder-open"></i> 打开鉴权文件目录</button>
             </div>
             <div class="step-status" id="generate-auth-status"></div>
+          </div>
+          
+          <div class="setup-step" id="config-skills">
+            <div class="step-header">
+              <span class="step-number"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+              <h3>Skills 文件（全局安装）</h3>
+            </div>
+            <p>快速访问 Skills 文件（全局安装）存储目录</p>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn btn-secondary" id="open-global-skills-dir-btn"><i class="fas fa-folder-open"></i> 打开 Skills 主文件目录</button>
+              <button class="btn btn-secondary" id="open-opencode-skills-dir-btn"><i class="fas fa-folder-open"></i> 打开 Skills for OpenCode 目录</button>
+            </div>
           </div>
         </div>
       </div>
@@ -226,7 +279,7 @@
         </div>
 
         <div class="setup-steps">
-          <div class="setup-step">
+          <div class="setup-step" id="models-zen">
             <div class="step-header">
               <span class="step-number"><i class="fa-solid fa-cube"></i></span>
               <h3>OpenCode Zen 模型管理</h3>
@@ -273,17 +326,19 @@
                     style="padding: 8px 12px; background: #3c3c3c; border: 1px solid #555555; border-radius: 4px; color: #cccccc; font-size: 13px; width: 300px;">
                 </div>
               </div>
-              <div id="zen-model-list-container" class="model-table-container" style="max-height: 300px;">
-                <table class="model-table">
+              <div id="zen-model-list-container" class="model-table-container zen-model-table-container">
+                <table class="model-table zen-model-table">
                   <thead>
                     <tr>
+                      <th>默认</th>
+                      <th>模型 ID</th>
                       <th>默认</th>
                       <th>模型 ID</th>
                     </tr>
                   </thead>
                   <tbody id="zen-model-list-body">
                     <tr>
-                      <td style="text-align: center; color: #858585;">正在加载模型信息……</td>
+                      <td colspan="4" style="text-align: center; color: #858585;">正在加载模型信息……</td>
                     </tr>
                   </tbody>
                 </table>
@@ -291,7 +346,7 @@
             </div>
           </div>
           
-          <div class="setup-step">
+          <div class="setup-step" id="models-third">
             <div class="step-header">
               <span class="step-number"><i class="fas fa-cubes"></i></span>
               <h3>第三方模型管理</h3>
@@ -305,8 +360,8 @@
                     style="padding: 8px 12px; background: #3c3c3c; border: 1px solid #555555; border-radius: 4px; color: #cccccc; font-size: 13px; width: 300px;">
                 </div>
               </div>
-              <div class="model-table-container" style="max-height: 300px;">
-                <table class="model-table">
+              <div class="model-table-container third-party-table-container">
+                <table class="model-table third-party-table">
                   <thead>
                     <tr>
                       <th>默认</th>
@@ -383,7 +438,81 @@
         </div>
 
         <div class="setup-steps">
-          <div class="setup-step">
+          <div class="setup-step" id="skills-search">
+            <div class="step-header">
+              <span class="step-number"><i class="fa-solid fa-search"></i></span>
+              <h3>Skills 查询</h3>
+            </div>
+            
+            <div class="skill-install-section" style="padding-top: 5px;">
+              <h4 style="margin: 0 0 15px 0; font-size: 16px;">关键词查询 Skill</h4>
+              <div class="input-group">
+                <input type="text" id="skill-search-input" placeholder="输入要查询的 skill 关键词">
+                <button class="btn btn-primary" id="search-skill-btn">查询 Skill</button>
+              </div>
+              <p class="input-hint"><i class="fas fa-info-circle"></i> 执行 npx skills find 命令进行查询</p>
+            </div>
+            
+            <!-- 查询结果表格 -->
+            <div id="skill-search-results">
+              <div class="model-table-container" style="max-height: 400px;">
+                <table class="model-table">
+                  <thead>
+                    <tr>
+                      <th>Skill 所在库</th>
+                      <th>Skill 名称</th>
+                      <th>访问链接</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="skill-search-results-body">
+                    <tr>
+                      <td colspan="4" style="text-align: center; color: #858585;">暂无查询结果</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div class="step-status" id="skill-search-status" style="margin-top: 20px;"></div>
+
+            <!-- 水平分割线 -->
+            <div style="border-top: 1px solid #3c3c3c; margin: 20px 0 10px 0;"></div>
+
+            <!-- 分析可用 skill -->
+            <div class="skill-install-section">
+              <h4 style="margin: 0 0 15px 0; font-size: 16px;">分析可用 Skill</h4>
+              <div class="input-group">
+                <button class="btn btn-primary" id="analyze-skills-btn" style="width: 100%;">分析可用 Skill</button>
+              </div>
+              <p class="input-hint"><i class="fas fa-info-circle"></i> 执行 npx skills list 命令分析当前环境可用的 Skills</p>
+            </div>
+
+            <!-- 分析结果表格 -->
+            <div id="skill-analyze-results">
+              <div class="model-table-container" style="max-height: 400px;">
+                <table class="model-table">
+                  <thead>
+                    <tr>
+                      <th>Skill 名称</th>
+                      <th>版本</th>
+                      <th>路径</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="skill-analyze-results-body">
+                    <tr>
+                      <td colspan="4" style="text-align: center; color: #858585;">暂无分析结果</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="step-status" id="skill-analyze-status" style="margin-top: 15px;"></div>
+          </div>
+
+          <div class="setup-step" id="skills-install">
             <div class="step-header">
               <span class="step-number"><i class="fa-solid fa-download"></i></span>
               <h3>Skills 安装</h3>
@@ -425,37 +554,6 @@
                 <button class="btn btn-secondary btn-small" id="upgrade-skill-btn">
                   <i class="fas fa-arrow-up"></i> 升级 Skill
                 </button>
-              </div>
-            </div>
-
-            <!-- 第三行：查询 Skill -->
-            <div class="skill-install-section" style="margin-top: 5px;">
-              <h4 style="font-size: 14px; color: #cccccc; margin-bottom: 10px;">查询 skill</h4>
-              <div class="input-group">
-                <input type="text" id="skill-search-input" placeholder="输入要查询的 skill 关键词">
-                <button class="btn btn-primary" id="search-skill-btn">查询</button>
-              </div>
-              <p class="input-hint"><i class="fas fa-search"></i> 在当前 Node.js 环境下执行 npx skills find 命令</p>
-              
-              <!-- 查询结果表格 -->
-              <div id="skill-search-results" style="display: none; margin-top: 15px;">
-                <div class="model-table-container" style="max-height: 400px;">
-                  <table class="model-table">
-                    <thead>
-                      <tr>
-                        <th>Skill 所在库</th>
-                        <th>Skill 名称</th>
-                        <th>访问链接</th>
-                        <th>操作</th>
-                      </tr>
-                    </thead>
-                    <tbody id="skill-search-results-body">
-                      <tr>
-                        <td colspan="4" style="text-align: center; color: #858585;">暂无查询结果</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
               </div>
             </div>
 
@@ -552,7 +650,7 @@ completion = client.chat.completions.create(
 
   <!-- Skill 安装进度弹窗 -->
   <div class="modal" id="skill-install-modal">
-    <div class="modal-content" style="max-width: 600px; height: 500px; display: flex; flex-direction: column;">
+    <div class="modal-content" style="max-width: 950px; height: 600px; display: flex; flex-direction: column;">
       <div class="modal-header">
         <h3>Skill 安装进度</h3>
       </div>
@@ -560,13 +658,29 @@ completion = client.chat.completions.create(
         <div class="install-info">
           <p><strong>Skill:</strong> <span id="modal-skill-name"></span></p>
           <p><strong>安装类型:</strong> <span id="modal-install-type"></span></p>
-          <p><strong>安装目录:</strong> <span id="modal-install-dir"></span></p>
+          <p><strong>安装目录:</strong> <span id="modal-install-dir"></span> <i class="fas fa-folder-open" id="open-install-dir-icon" style="color: #569cd6; cursor: pointer; margin-left: 8px; display: none;" title="打开目录"></i></p>
         </div>
         <div class="step-status info" id="modal-install-status">正在准备安装……</div>
         <div class="install-log active" id="modal-install-log" style="margin-top: 15px; flex: 1; overflow-y: auto;"></div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" id="close-install-modal" disabled>关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 环境设置进度弹窗 -->
+  <div class="modal" id="env-progress-modal">
+    <div class="modal-content" style="max-width: 950px; height: 600px; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <h3 id="env-modal-title">操作进度</h3>
+      </div>
+      <div class="modal-body" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+        <div class="step-status info" id="env-modal-status" style="margin-top: 15px;">正在准备……</div>
+        <div class="install-log active" id="env-modal-log" style="margin-top: 15px; flex: 1; overflow-y: auto;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="close-env-modal" disabled>关闭</button>
       </div>
     </div>
   </div>

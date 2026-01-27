@@ -79,6 +79,9 @@ function getNodePackageName() {
 async function extractNodejs(packagePath) {
   return new Promise((resolve, reject) => {
     console.log('[解压] 开始解压:', packagePath);
+    if (mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.send('install-progress', `[解压] 开始解压: ${packagePath}\n`);
+    }
     const ext = path.extname(packagePath);
     console.log('[解压] 文件扩展名:', ext);
     
@@ -86,6 +89,9 @@ async function extractNodejs(packagePath) {
       if (!fs.existsSync(NODEJS_PATH)) {
         fs.mkdirSync(NODEJS_PATH, { recursive: true });
         console.log('[解压] 创建目录:', NODEJS_PATH);
+        if (mainWindow && mainWindow.webContents) {
+          mainWindow.webContents.send('install-progress', `[解压] 创建目录: ${NODEJS_PATH}\n`);
+        }
       }
       
       // 判断文件类型：优先根据扩展名，打包后无扩展名则根据平台判断
@@ -95,6 +101,9 @@ async function extractNodejs(packagePath) {
       if (isTarGz) {
         // 解压 tar.gz
         console.log('[解压] 使用 tar 解压');
+        if (mainWindow && mainWindow.webContents) {
+          mainWindow.webContents.send('install-progress', '[解压] 使用 tar 格式解压...\n');
+        }
         tar.x({
           file: packagePath,
           cwd: NODEJS_PATH,
@@ -115,20 +124,33 @@ async function extractNodejs(packagePath) {
             }
           }
           console.log('[解压] tar 解压完成');
+          if (mainWindow && mainWindow.webContents) {
+            mainWindow.webContents.send('install-progress', '[解压] 解压完成，配置文件权限...\n');
+            mainWindow.webContents.send('install-progress', '[解压] Node.js 环境配置完成！\n');
+          }
           resolve();
         }).catch(err => {
           console.error('[解压] tar 解压失败:', err);
+          if (mainWindow && mainWindow.webContents) {
+            mainWindow.webContents.send('install-progress', `[解压] 失败: ${err.message}\n`);
+          }
           reject(err);
         });
       } else if (isZip) {
         // 解压 zip
         console.log('[解压] 使用 zip 解压');
+        if (mainWindow && mainWindow.webContents) {
+          mainWindow.webContents.send('install-progress', '[解压] 使用 zip 格式解压...\n');
+        }
         const zip = new AdmZip(packagePath);
         zip.extractAllTo(NODEJS_PATH, true);
         
         // 移动文件到根目录（使用更安全的方式）
         const extractedDir = fs.readdirSync(NODEJS_PATH).find(f => f.startsWith('node-'));
         if (extractedDir) {
+          if (mainWindow && mainWindow.webContents) {
+            mainWindow.webContents.send('install-progress', '[解压] 整理文件结构...\n');
+          }
           const srcDir = path.join(NODEJS_PATH, extractedDir);
           const files = fs.readdirSync(srcDir);
           
@@ -159,14 +181,23 @@ async function extractNodejs(packagePath) {
           fs.rmSync(srcDir, { recursive: true, force: true });
         }
         console.log('[解压] zip 解压完成');
+        if (mainWindow && mainWindow.webContents) {
+          mainWindow.webContents.send('install-progress', '[解压] Node.js 环境配置完成！\n');
+        }
         resolve();
       } else {
         const error = new Error(`不支持的文件格式: ${ext}`);
         console.error('[解压] 错误:', error.message);
+        if (mainWindow && mainWindow.webContents) {
+          mainWindow.webContents.send('install-progress', `[解压] 错误: ${error.message}\n`);
+        }
         reject(error);
       }
     } catch (error) {
       console.error('[解压] 异常:', error);
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('install-progress', `[解压] 异常: ${error.message}\n`);
+      }
       reject(error);
     }
   });
@@ -268,6 +299,10 @@ function configureNpmRegistry(registry) {
       return reject(new Error(`找不到 npm-cli.js: ${npmCliPath}`));
     }
 
+    if (mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.send('install-progress', `[npm] 开始配置 npm 源: ${registry}\n`);
+    }
+
     // 设置环境变量
     const env = { ...process.env, PREFIX: NODEJS_PATH };
     const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
@@ -283,15 +318,37 @@ function configureNpmRegistry(registry) {
     let stderr = '';
     child.stderr.on('data', (data) => {
       stderr += data.toString();
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('install-progress', data.toString());
+      }
+    });
+
+    child.stdout.on('data', (data) => {
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('install-progress', data.toString());
+      }
     });
 
     child.on('error', (err) => {
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('install-progress', `[npm] 错误: ${err.message}\n`);
+      }
       reject(err);
     });
     
     child.on('close', (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`npm config failed with code ${code}. ${stderr}`));
+      if (code === 0) {
+        if (mainWindow && mainWindow.webContents) {
+          mainWindow.webContents.send('install-progress', '[npm] npm 源配置完成！\n');
+        }
+        resolve();
+      } else {
+        const error = new Error(`npm config failed with code ${code}. ${stderr}`);
+        if (mainWindow && mainWindow.webContents) {
+          mainWindow.webContents.send('install-progress', `[npm] 配置失败: ${error.message}\n`);
+        }
+        reject(error);
+      }
     });
   });
 }
@@ -603,6 +660,29 @@ ipcMain.handle('get-npm-registry', async () => {
   } catch (error) {
     return { success: false, registry: null };
   }
+});
+
+ipcMain.handle('check-npm', async () => {
+  const config = initConfig();
+  const { nodePath, nodeBinPath } = getNodeExecutionPaths();
+  const extracted = config.nodejsExtracted && fs.existsSync(nodePath);
+  
+  let version = null;
+  if (extracted) {
+    try {
+      const npmPath = path.join(nodeBinPath, process.platform === 'win32' ? 'npm.cmd' : 'npm');
+      if (fs.existsSync(npmPath)) {
+        version = require('child_process').execSync(`"${npmPath}" -v`).toString().trim();
+      }
+    } catch (e) {
+      console.error('[npm] 获取版本号失败:', e);
+    }
+  }
+
+  return {
+    extracted: extracted && version !== null,
+    version: version
+  };
 });
 
 ipcMain.handle('check-opencode', async () => {
@@ -1036,6 +1116,86 @@ ipcMain.handle('open-auth-directory', async () => {
   }
 });
 
+// 获取全局 Skill 安装目录
+ipcMain.handle('get-global-skill-dir', () => {
+  const globalSkillDir = path.join(os.homedir(), '.config', 'opencode', 'skills');
+  return { path: globalSkillDir };
+});
+
+// 打开 Skills 全局主文件目录 (~/.agents/skills)
+ipcMain.handle('open-global-skills-directory', async () => {
+  try {
+    const globalSkillsDir = process.platform === 'win32'
+      ? path.join(os.homedir(), '.agents', 'skills')
+      : path.join(os.homedir(), '.agents', 'skills');
+    
+    // 检查目录是否存在,如果不存在则创建
+    if (!fs.existsSync(globalSkillsDir)) {
+      fs.mkdirSync(globalSkillsDir, { recursive: true });
+    }
+    
+    // Windows 下使用 explorer 打开,更可靠
+    if (process.platform === 'win32') {
+      require('child_process').exec(`explorer "${globalSkillsDir}"`);
+      return { success: true };
+    }
+    
+    // macOS 和 Linux 使用 shell.openPath
+    await shell.openPath(globalSkillsDir);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// 打开 Skills for OpenCode 目录 (~/.config/opencode/skills)
+ipcMain.handle('open-opencode-skills-directory', async () => {
+  try {
+    const opencodeSkillsDir = process.platform === 'win32'
+      ? path.join(os.homedir(), '.config', 'opencode', 'skills')
+      : path.join(os.homedir(), '.config', 'opencode', 'skills');
+    
+    // 检查目录是否存在,如果不存在则创建
+    if (!fs.existsSync(opencodeSkillsDir)) {
+      fs.mkdirSync(opencodeSkillsDir, { recursive: true });
+    }
+    
+    // Windows 下使用 explorer 打开,更可靠
+    if (process.platform === 'win32') {
+      require('child_process').exec(`explorer "${opencodeSkillsDir}"`);
+      return { success: true };
+    }
+    
+    // macOS 和 Linux 使用 shell.openPath
+    await shell.openPath(opencodeSkillsDir);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// 打开指定目录
+ipcMain.handle('open-directory', async (event, dirPath) => {
+  try {
+    // 检查目录是否存在，如果不存在则创建
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+    
+    // Windows 下使用 explorer 打开，更可靠
+    if (process.platform === 'win32') {
+      require('child_process').exec(`explorer "${dirPath}"`);
+      return { success: true };
+    }
+    
+    // macOS 和 Linux 使用 shell.openPath
+    await shell.openPath(dirPath);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 // 安装 Skill
 ipcMain.handle('install-skill', async (event, installDir, skillUrl, isGlobal = false) => {
   return new Promise((resolve, reject) => {
@@ -1305,6 +1465,68 @@ ipcMain.handle('search-skill', async (event, keyword) => {
   });
 });
 
+// 分析可用 Skill
+ipcMain.handle('analyze-skills', async () => {
+  return new Promise((resolve, reject) => {
+    ensureNodejsPermissions();
+    const { nodePath, nodeBinPath } = getNodeExecutionPaths();
+
+    const env = { ...process.env };
+    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+    const currentPath = env[pathKey] || env.PATH || env.Path || '';
+    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
+    env.PATH = env[pathKey];
+    env.Path = env[pathKey];
+    
+    const npxPath = process.platform === 'win32' 
+      ? path.join(NODEJS_PATH, 'npx.cmd')
+      : path.join(NODEJS_PATH, 'bin/npx');
+    
+    console.log('[Skill 分析] 开始分析可用 Skills');
+    
+    const child = spawn(npxPath, ['skills', 'list'], {
+      env,
+      shell: process.platform === 'win32'
+    });
+    
+    child.on('error', (err) => {
+      resolve({ success: false, error: err.message });
+    });
+    
+    let output = '';
+    let errorOutput = '';
+    
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+    
+    child.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+    });
+    
+    child.on('close', (code) => {
+      console.log('[Skill 分析] 命令执行完成，退出码:', code);
+      console.log('[Skill 分析] 原始输出:', output);
+      console.log('[Skill 分析] 错误输出:', errorOutput);
+      
+      if (code === 0) {
+        // 解析输出，提取 skill 信息
+        try {
+          const skills = parseSkillListOutput(output);
+          console.log('[Skill 分析] 解析结果:', JSON.stringify(skills, null, 2));
+          resolve({ success: true, skills });
+        } catch (parseError) {
+          console.error('[Skill 分析] 解析失败:', parseError);
+          resolve({ success: false, error: `解析结果失败: ${parseError.message}` });
+        }
+      } else {
+        const errorMsg = errorOutput || output || '分析失败';
+        resolve({ success: false, error: `分析失败 (退出码: ${code})\n${errorMsg}` });
+      }
+    });
+  });
+});
+
 // 解析 npx skills find 的输出
 function parseSkillFindOutput(output) {
   const skills = [];
@@ -1417,5 +1639,101 @@ function parseSkillFindOutput(output) {
   }
   
   console.log('[解析] 最终解析出的 skills 数量:', skills.length);
+  return skills;
+}
+
+// 解析 npx skills list 的输出
+function parseSkillListOutput(output) {
+  const skills = [];
+  
+  if (!output || output.trim().length === 0) {
+    console.log('[解析 List] 输出为空');
+    return skills;
+  }
+  
+  console.log('[解析 List] 开始解析，输出长度:', output.length);
+  
+  // 移除 ANSI 转义码
+  let cleanOutput = output.replace(/\x1B\[[0-9;]*m/g, '');
+  
+  // 解析 npx skills list 的文本格式
+  // 格式示例:
+  // Skill Name          Version     Path
+  // skill-name          1.0.0       /path/to/skill
+  // 或者 JSON 格式
+  
+  // 尝试 JSON 解析
+  try {
+    const parsed = JSON.parse(cleanOutput.trim());
+    if (Array.isArray(parsed)) {
+      console.log('[解析 List] 成功解析为 JSON 数组');
+      return parsed.map(skill => ({
+        name: skill.name || skill.skillName || 'Unknown',
+        version: skill.version || 'N/A',
+        path: skill.path || skill.location || 'N/A'
+      }));
+    }
+  } catch (e) {
+    console.log('[解析 List] JSON 解析失败，使用文本解析');
+  }
+  
+  // 文本解析
+  const lines = cleanOutput.split('\n');
+  console.log('[解析 List] 尝试文本解析，总行数:', lines.length);
+  
+  let inTableMode = false;
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    if (!line) continue;
+    
+    console.log(`[解析 List] 第 ${i} 行:`, line);
+    
+    // 跳过 ASCII 艺术字和装饰性字符
+    if (line.match(/^[█╗╔╚═║╝╠╣╦╩╬\s]+$/) || line.includes('███')) {
+      console.log('[解析 List] 跳过 ASCII 艺术字');
+      continue;
+    }
+    
+    // 跳过表头
+    if (line.match(/^(Skill|Name|Package)/i)) {
+      console.log('[解析 List] 识别到表头');
+      inTableMode = true;
+      continue;
+    }
+    
+    // 跳过分隔线
+    if (line.match(/^[-=]+$/)) {
+      console.log('[解析 List] 跳过分隔线');
+      continue;
+    }
+    
+    // 尝试解析数据行（空格分隔）
+    if (inTableMode || i > 2) { // 假设表头在前几行
+      // 分割多个空格
+      const parts = line.split(/\s{2,}/);
+      
+      if (parts.length >= 3) {
+        const skillName = parts[0].trim();
+        const skillVersion = parts[1].trim();
+        const skillPath = parts.slice(2).join(' ').trim();
+        
+        if (skillName && !skillName.match(/^(Skill|Name|Package)/i)) {
+          console.log('[解析 List] 匹配到 skill:', {
+            name: skillName,
+            version: skillVersion,
+            path: skillPath
+          });
+          
+          skills.push({
+            name: skillName,
+            version: skillVersion,
+            path: skillPath
+          });
+        }
+      }
+    }
+  }
+  
+  console.log('[解析 List] 最终解析出的 skills 数量:', skills.length);
   return skills;
 }
