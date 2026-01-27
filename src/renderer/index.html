@@ -381,10 +381,87 @@
           <h2>Skills 能力配置及管理</h2>
           <p class="subtitle">精品及定制化 Skills 管理和扩展</p>
         </div>
-        <div class="placeholder-content">
-          <div class="placeholder-icon"><i class="fas fa-toolbox"></i></div>
-          <h3>Skills 管理</h3>
-          <p>此功能将在未来版本中提供，用于可视化配置 OpenCode Skills</p>
+
+        <div class="setup-steps">
+          <div class="setup-step">
+            <div class="step-header">
+              <span class="step-number"><i class="fa-solid fa-download"></i></span>
+              <h3>Skills 安装</h3>
+            </div>
+            <p>安装 Skills 扩展到指定目录</p>
+            
+            <!-- 第一行：目标安装目录 -->
+            <div class="skill-install-section">
+              <h4 style="font-size: 14px; color: #cccccc; margin-bottom: 10px;">目标安装目录</h4>
+              <div class="input-group">
+                <input type="text" id="skill-install-dir" placeholder="请选择或输入 Skills 安装目录">
+                <button class="btn btn-primary" id="select-skill-dir-btn">选择目录</button>
+              </div>
+              <p class="input-hint"><i class="fas fa-lightbulb"></i> 可点击按钮选择，同时支持手动输入路径或拖拽上传</p>
+            </div>
+
+            <!-- 第二行：Skill 安装地址 -->
+            <div class="skill-install-section" style="margin-top: 5px;">
+              <div style="display: flex; align-items: center; margin-bottom: 10px; gap: 20px;">
+                <h4 style="font-size: 14px; color: #cccccc; margin: 0;">Skill 安装地址</h4>
+                <!-- 全局安装滑动按钮 -->
+                <label class="toggle-switch">
+                  <input type="checkbox" id="skill-global-install">
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">全局安装</span>
+                </label>
+              </div>
+              <div class="input-group">
+                <input type="text" id="skill-install-url" placeholder="输入 Skill 安装地址，如：@opencode/skill-pdf">
+                <button class="btn btn-primary" id="install-skill-btn">安装 Skill</button>
+              </div>
+              <p class="input-hint"><i class="fas fa-info-circle"></i> 支持 npm 包名、GitHub 仓库地址等格式</p>
+              
+              <!-- Skills 管理功能按钮 -->
+              <div style="margin-top: 15px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <button class="btn btn-secondary btn-small" id="check-skill-update-btn">
+                  <i class="fas fa-sync-alt"></i> 检查 Skill 更新
+                </button>
+                <button class="btn btn-secondary btn-small" id="upgrade-skill-btn">
+                  <i class="fas fa-arrow-up"></i> 升级 Skill
+                </button>
+              </div>
+            </div>
+
+            <!-- 第三行：查询 Skill -->
+            <div class="skill-install-section" style="margin-top: 5px;">
+              <h4 style="font-size: 14px; color: #cccccc; margin-bottom: 10px;">查询 skill</h4>
+              <div class="input-group">
+                <input type="text" id="skill-search-input" placeholder="输入要查询的 skill 关键词">
+                <button class="btn btn-primary" id="search-skill-btn">查询</button>
+              </div>
+              <p class="input-hint"><i class="fas fa-search"></i> 在当前 Node.js 环境下执行 npx skills find 命令</p>
+              
+              <!-- 查询结果表格 -->
+              <div id="skill-search-results" style="display: none; margin-top: 15px;">
+                <div class="model-table-container" style="max-height: 400px;">
+                  <table class="model-table">
+                    <thead>
+                      <tr>
+                        <th>Skill 所在库</th>
+                        <th>Skill 名称</th>
+                        <th>访问链接</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="skill-search-results-body">
+                      <tr>
+                        <td colspan="4" style="text-align: center; color: #858585;">暂无查询结果</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-status" id="skill-install-status"></div>
+            <div class="install-log" id="skill-install-log"></div>
+          </div>
         </div>
       </div>
 
@@ -469,6 +546,27 @@ completion = client.chat.completions.create(
       <div class="modal-footer">
         <button class="btn btn-secondary" id="cancel-parse">取消</button>
         <button class="btn btn-primary" id="confirm-parse">确认解析</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skill 安装进度弹窗 -->
+  <div class="modal" id="skill-install-modal">
+    <div class="modal-content" style="max-width: 600px; height: 500px; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <h3>Skill 安装进度</h3>
+      </div>
+      <div class="modal-body" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+        <div class="install-info">
+          <p><strong>Skill:</strong> <span id="modal-skill-name"></span></p>
+          <p><strong>安装类型:</strong> <span id="modal-install-type"></span></p>
+          <p><strong>安装目录:</strong> <span id="modal-install-dir"></span></p>
+        </div>
+        <div class="step-status info" id="modal-install-status">正在准备安装……</div>
+        <div class="install-log active" id="modal-install-log" style="margin-top: 15px; flex: 1; overflow-y: auto;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="close-install-modal" disabled>关闭</button>
       </div>
     </div>
   </div>

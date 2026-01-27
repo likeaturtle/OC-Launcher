@@ -28,5 +28,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onConfigChange: (callback) => ipcRenderer.on('opencode-config-changed', () => callback()),
   openConfigDirectory: () => ipcRenderer.invoke('open-config-directory'),
   generateAuthFile: (options) => ipcRenderer.invoke('generate-auth-file', options),
-  openAuthDirectory: () => ipcRenderer.invoke('open-auth-directory')
+  openAuthDirectory: () => ipcRenderer.invoke('open-auth-directory'),
+  installSkill: (installDir, skillUrl, isGlobal) => ipcRenderer.invoke('install-skill', installDir, skillUrl, isGlobal),
+  onSkillInstallProgress: (callback) => ipcRenderer.on('skill-install-progress', (event, data) => callback(data)),
+  checkSkillUpdate: (installDir) => ipcRenderer.invoke('check-skill-update', installDir),
+  upgradeSkill: (installDir) => ipcRenderer.invoke('upgrade-skill', installDir),
+  searchSkill: (keyword) => ipcRenderer.invoke('search-skill', keyword)
 });

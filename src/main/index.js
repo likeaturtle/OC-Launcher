@@ -1035,3 +1035,387 @@ ipcMain.handle('open-auth-directory', async () => {
     return { success: false, error: error.message };
   }
 });
+
+// 安装 Skill
+ipcMain.handle('install-skill', async (event, installDir, skillUrl, isGlobal = false) => {
+  return new Promise((resolve, reject) => {
+    // 只有非全局安装时才检查和创建目录
+    if (!isGlobal && installDir) {
+      if (!fs.existsSync(installDir)) {
+        try {
+          fs.mkdirSync(installDir, { recursive: true });
+          console.log(`[Skill 安装] 已创建目录: ${installDir}`);
+        } catch (err) {
+          return resolve({ 
+            success: false, 
+            error: `无法创建目录: ${err.message}` 
+          });
+        }
+      }
+    }
+
+    ensureNodejsPermissions();
+    const { nodePath, nodeBinPath } = getNodeExecutionPaths();
+
+    // 设置环境变量
+    const env = { ...process.env };
+    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+    const currentPath = env[pathKey] || env.PATH || env.Path || '';
+    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
+    env.PATH = env[pathKey];
+    env.Path = env[pathKey];
+    
+    // 获取 npx 路径
+    const npxPath = process.platform === 'win32' 
+      ? path.join(NODEJS_PATH, 'npx.cmd')
+      : path.join(NODEJS_PATH, 'bin/npx');
+    
+    console.log(`[Skill 安装] 在目录 ${installDir || '全局'} 中安装 ${skillUrl}${isGlobal ? ' (全局)' : ''}`);
+    
+    // 解析 skillUrl，格式为 owner/repo@skill-name
+    let repoName = skillUrl;
+    let skillName = '';
+    
+    if (skillUrl.includes('@')) {
+      const parts = skillUrl.split('@');
+      repoName = parts[0]; // owner/repo
+      skillName = parts[1]; // skill-name
+    }
+    
+    // 构建命令: npx skills add owner/repo --skill skill-name -a opencode -y [-g]
+    const args = ['skills', 'add', repoName];
+    
+    if (skillName) {
+      args.push('--skill', skillName);
+    }
+    
+    args.push('-a', 'opencode', '-y');
+    
+    if (isGlobal) {
+      args.push('-g'); // 如果全局安装，添加 -g 参数
+    }
+    
+    console.log(`[Skill 安装] 执行命令: npx ${args.join(' ')}`);
+    
+    // 全局安装时使用当前工作目录，否则使用指定的安装目录
+    const workingDir = isGlobal ? process.cwd() : installDir;
+    
+    const child = spawn(npxPath, args, {
+      cwd: workingDir,
+      env,
+      shell: process.platform === 'win32' // Windows 需要 shell
+    });
+    
+    child.on('error', (err) => {
+      resolve({ success: false, error: err.message });
+    });
+    
+    let output = '';
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('skill-install-progress', data.toString());
+      }
+    });
+    
+    child.stderr.on('data', (data) => {
+      output += data.toString();
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('skill-install-progress', data.toString());
+      }
+    });
+    
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve({ success: true, output });
+      } else {
+        resolve({ success: false, error: `安装失败 (退出码: ${code})\n${output}` });
+      }
+    });
+  });
+});
+
+// 检查 Skill 更新
+ipcMain.handle('check-skill-update', async (event, installDir) => {
+  return new Promise((resolve, reject) => {
+    ensureNodejsPermissions();
+    const { nodePath, nodeBinPath } = getNodeExecutionPaths();
+
+    const env = { ...process.env };
+    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+    const currentPath = env[pathKey] || env.PATH || env.Path || '';
+    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
+    env.PATH = env[pathKey];
+    env.Path = env[pathKey];
+    
+    const npxPath = process.platform === 'win32' 
+      ? path.join(NODEJS_PATH, 'npx.cmd')
+      : path.join(NODEJS_PATH, 'bin/npx');
+    
+    console.log(`[Skill 检查] 在目录 ${installDir} 中检查更新`);
+    
+    const child = spawn(npxPath, ['skills', 'check'], {
+      cwd: installDir,
+      env,
+      shell: process.platform === 'win32'
+    });
+    
+    child.on('error', (err) => {
+      resolve({ success: false, error: err.message });
+    });
+    
+    let output = '';
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('skill-install-progress', data.toString());
+      }
+    });
+    
+    child.stderr.on('data', (data) => {
+      output += data.toString();
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('skill-install-progress', data.toString());
+      }
+    });
+    
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve({ success: true, output });
+      } else {
+        resolve({ success: false, error: `检查失败 (退出码: ${code})\n${output}` });
+      }
+    });
+  });
+});
+
+// 升级 Skill
+ipcMain.handle('upgrade-skill', async (event, installDir) => {
+  return new Promise((resolve, reject) => {
+    ensureNodejsPermissions();
+    const { nodePath, nodeBinPath } = getNodeExecutionPaths();
+
+    const env = { ...process.env };
+    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+    const currentPath = env[pathKey] || env.PATH || env.Path || '';
+    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
+    env.PATH = env[pathKey];
+    env.Path = env[pathKey];
+    
+    const npxPath = process.platform === 'win32' 
+      ? path.join(NODEJS_PATH, 'npx.cmd')
+      : path.join(NODEJS_PATH, 'bin/npx');
+    
+    console.log(`[Skill 升级] 在目录 ${installDir} 中升级`);
+    
+    const child = spawn(npxPath, ['skills', 'update'], {
+      cwd: installDir,
+      env,
+      shell: process.platform === 'win32'
+    });
+    
+    child.on('error', (err) => {
+      resolve({ success: false, error: err.message });
+    });
+    
+    let output = '';
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('skill-install-progress', data.toString());
+      }
+    });
+    
+    child.stderr.on('data', (data) => {
+      output += data.toString();
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('skill-install-progress', data.toString());
+      }
+    });
+    
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve({ success: true, output });
+      } else {
+        resolve({ success: false, error: `升级失败 (退出码: ${code})\n${output}` });
+      }
+    });
+  });
+});
+
+// 查询 Skill
+ipcMain.handle('search-skill', async (event, keyword) => {
+  return new Promise((resolve, reject) => {
+    ensureNodejsPermissions();
+    const { nodePath, nodeBinPath } = getNodeExecutionPaths();
+
+    const env = { ...process.env };
+    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+    const currentPath = env[pathKey] || env.PATH || env.Path || '';
+    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
+    env.PATH = env[pathKey];
+    env.Path = env[pathKey];
+    
+    const npxPath = process.platform === 'win32' 
+      ? path.join(NODEJS_PATH, 'npx.cmd')
+      : path.join(NODEJS_PATH, 'bin/npx');
+    
+    console.log(`[Skill 查询] 查询关键词: ${keyword}`);
+    
+    const child = spawn(npxPath, ['skills', 'find', keyword], {
+      env,
+      shell: process.platform === 'win32'
+    });
+    
+    child.on('error', (err) => {
+      resolve({ success: false, error: err.message });
+    });
+    
+    let output = '';
+    let errorOutput = '';
+    
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+    
+    child.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+    });
+    
+    child.on('close', (code) => {
+      console.log('[Skill 查询] 命令执行完成，退出码:', code);
+      console.log('[Skill 查询] 原始输出:', output);
+      console.log('[Skill 查询] 错误输出:', errorOutput);
+      
+      if (code === 0) {
+        // 解析输出，提取 skill 信息
+        try {
+          const skills = parseSkillFindOutput(output);
+          console.log('[Skill 查询] 解析结果:', JSON.stringify(skills, null, 2));
+          resolve({ success: true, skills });
+        } catch (parseError) {
+          console.error('[Skill 查询] 解析失败:', parseError);
+          resolve({ success: false, error: `解析结果失败: ${parseError.message}` });
+        }
+      } else {
+        const errorMsg = errorOutput || output || '查询失败';
+        resolve({ success: false, error: `查询失败 (退出码: ${code})\n${errorMsg}` });
+      }
+    });
+  });
+});
+
+// 解析 npx skills find 的输出
+function parseSkillFindOutput(output) {
+  const skills = [];
+  
+  if (!output || output.trim().length === 0) {
+    console.log('[解析] 输出为空');
+    return skills;
+  }
+  
+  console.log('[解析] 开始解析，输出长度:', output.length);
+  
+  // 尝试方法 1: 解析 JSON 格式
+  try {
+    const parsed = JSON.parse(output.trim());
+    if (Array.isArray(parsed)) {
+      console.log('[解析] 成功解析为 JSON 数组');
+      return parsed.map(skill => ({
+        name: skill.name || skill.packageName || skill.package || 'Unknown',
+        version: skill.version || skill.latestVersion || skill.latest || 'N/A',
+        description: skill.description || skill.desc || skill.summary || ''
+      }));
+    }
+  } catch (e) {
+    console.log('[解析] JSON 解析失败，使用文本解析');
+  }
+  
+  // 解析 npx skills find 的文本格式
+  // 格式:
+  // waynesutton/convexskills@convex realtime
+  // └ https://skills.sh/waynesutton/convexskills/convex-realtime
+  const lines = output.split('\n');
+  console.log('[解析] 尝试文本解析，总行数:', lines.length);
+  
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    if (!line) continue;
+    
+    // 移除 ANSI 转义码（颜色代码）
+    line = line.replace(/\x1B\[[0-9;]*m/g, '');
+    
+    console.log(`[解析] 第 ${i} 行:`, line);
+    
+    // 跳过 ASCII 艺术字和装饰性字符
+    if (line.match(/^[█╗╔╚═║╝╠╣╦╩╬\s]+$/) || line.includes('███')) {
+      console.log('[解析] 跳过 ASCII 艺术字');
+      continue;
+    }
+    
+    // 跳过提示性文本
+    if (line.match(/^Install with/i) || line.match(/^Usage:/i) || line.includes('<owner/repo@skill>')) {
+      console.log('[解析] 跳过提示文本');
+      continue;
+    }
+    
+    // 跳过 URL 行（以 └ 或 ├ 开头）
+    if (line.startsWith('└') || line.startsWith('├')) {
+      console.log('[解析] 跳过 URL 行');
+      continue;
+    }
+    
+    // 匹配 GitHub shorthand@skill-part1 skill-part2... 格式
+    // 例如: waynesutton/convexskills@convex realtime
+    // 或: zhangyanxs/repo2skill@repo2skill
+    // 或: 2025emma/vibe-coding-cn@timescaledb
+    // 或: aj-geddes/useful-ai-prompts@real-time-features
+    // GitHub shorthand 格式: owner/repo（可以包含数字、字母、连字符）
+    // Skill 名称：@之后的所有内容（可以包含空格、连字符等）
+    
+    // 检查是否包含 @ 符号
+    if (line.includes('@')) {
+      console.log('[解析] 该行包含 @ 符号，尝试匹配');
+      // 使用更简单的正则：匹配 任意字符/任意字符@任意内容
+      const skillMatch = line.match(/^([^@\/]+\/[^@\/]+)@(.+)$/);
+      if (skillMatch) {
+        const githubShorthand = skillMatch[1].trim();  // 例如: zhangyanxs/repo2skill
+        const skillNamePart = skillMatch[2].trim();  // 例如: repo2skill 或 convex realtime
+        
+        console.log('[解析] 匹配到 skill:', {
+          githubShorthand,
+          skillName: skillNamePart
+        });
+        
+        // 检查下一行是否有 URL
+        let skillUrl = '';
+        if (i + 1 < lines.length) {
+          let nextLine = lines[i + 1].trim();
+          // 移除下一行的 ANSI 转义码
+          nextLine = nextLine.replace(/\x1B\[[0-9;]*m/g, '');
+          console.log('[解析] 检查下一行:', nextLine);
+          if (nextLine.startsWith('└') || nextLine.startsWith('├')) {
+            const urlMatch = nextLine.match(/https:\/\/[^\s]+/);
+            if (urlMatch) {
+              skillUrl = urlMatch[0];
+              console.log('[解析] 提取到 URL:', skillUrl);
+            }
+          }
+        }
+        
+        skills.push({
+          name: githubShorthand,
+          version: skillNamePart,  // 使用 skill 名称作为版本列
+          description: skillUrl || `https://skills.sh/${githubShorthand}/${skillNamePart.replace(/\s+/g, '-')}`
+        });
+      } else {
+        console.log('[解析] 包含 @ 但未匹配正则表达式');
+      }
+    } else {
+      console.log('[解析] 未匹配该行（不包含 @）');
+    }
+  }
+  
+  console.log('[解析] 最终解析出的 skills 数量:', skills.length);
+  return skills;
+}
