@@ -166,6 +166,9 @@ async function initialize() {
 
   // 加载 OpenCode Zen 模型信息
   await loadZenModels();
+  
+  // 填充重置环境路径信息
+  fillResetEnvironmentPaths();
 }
 
 // 全局变量存储所有 Zen 模型，用于搜索过滤
@@ -355,7 +358,7 @@ async function updateStatus() {
   const nodejsItem = nodejsStatus.parentElement;
   
   if (nodejsCheck.extracted) {
-    let statusText = nodejsCheck.version ? `${nodejsCheck.version}` : '';
+    let statusText = nodejsCheck.version ? `${nodejsCheck.version.replace(/^v/, '')}` : '';
     nodejsStatus.innerHTML = `<i class="fas fa-check-circle"></i> 已配置${statusText ? '（' + statusText + '）' : ''}`;
     nodejsStatus.style.color = '#4ec9b0';
     nodejsItem.dataset.tooltip = '点击即可复制 Node.js 安装地址';
@@ -732,7 +735,12 @@ if (installVersionBtn && versionInput) {
 
 // 重置环境
 document.getElementById('reset-env-btn').addEventListener('click', async () => {
-  const confirmText = '此操作将清空所有环境数据，包括已安装的 Node.js 和 OpenCode，操作不可逆！\n\n确定要继续吗？';
+  const confirmText = '此操作将清空所有环境数据，包括：\n\n' +
+    '1. 已安装的 Node.js 和 OpenCode\n' +
+    '2. OpenCode 配置文件 (opencode.json)\n' +
+    '3. OpenCode 鉴权文件 (auth.json)\n' +
+    '4. Skills 目录 (~/.agents/skills)\n\n' +
+    '操作不可逆！\n\n确定要继续吗？';
   if (!confirm(confirmText)) {
     return;
   }
@@ -766,6 +774,32 @@ document.getElementById('reset-env-btn').addEventListener('click', async () => {
   btn.disabled = false;
   btn.textContent = '重置环境';
 });
+
+// 填充重置环境路径信息
+function fillResetEnvironmentPaths() {
+  const isMac = navigator.platform.toLowerCase().includes('mac');
+  const isWin = navigator.platform.toLowerCase().includes('win');
+  
+  if (isMac) {
+    // macOS 路径
+    document.getElementById('reset-nodejs-path').textContent = '~/Library/Application Support/opencode-launcher/';
+    document.getElementById('reset-config-path').textContent = '~/.config/opencode/';
+    document.getElementById('reset-auth-path').textContent = '~/.local/share/opencode/';
+    document.getElementById('reset-skills-path').textContent = '~/.agents/skills/';
+  } else if (isWin) {
+    // Windows 路径
+    document.getElementById('reset-nodejs-path').textContent = '%APPDATA%\\opencode-launcher\\';
+    document.getElementById('reset-config-path').textContent = '%APPDATA%\\opencode\\';
+    document.getElementById('reset-auth-path').textContent = '%LOCALAPPDATA%\\opencode\\';
+    document.getElementById('reset-skills-path').textContent = '%USERPROFILE%\\.agents\\skills\\';
+  } else {
+    // Linux 路径（使用与 macOS 相同的路径）
+    document.getElementById('reset-nodejs-path').textContent = '~/.local/share/opencode-launcher/';
+    document.getElementById('reset-config-path').textContent = '~/.config/opencode/';
+    document.getElementById('reset-auth-path').textContent = '~/.local/share/opencode/';
+    document.getElementById('reset-skills-path').textContent = '~/.agents/skills/';
+  }
+}
 
 // 生成 OpenCode 默认配置
 document.getElementById('generate-config-btn').addEventListener('click', async () => {

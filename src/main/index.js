@@ -986,6 +986,30 @@ ipcMain.handle('reset-environment', async () => {
       fs.rmSync(OPENCODE_PATH, { recursive: true, force: true });
     }
     
+    // 清空 OpenCode 配置目录
+    const opencodeConfigDir = process.platform === 'win32'
+      ? path.join(process.env.APPDATA, 'opencode')
+      : path.join(os.homedir(), '.config', 'opencode');
+    if (fs.existsSync(opencodeConfigDir)) {
+      fs.rmSync(opencodeConfigDir, { recursive: true, force: true });
+    }
+    
+    // 清空 OpenCode 数据目录
+    const opencodeDataDir = process.platform === 'win32'
+      ? path.join(process.env.LOCALAPPDATA, 'opencode')
+      : path.join(os.homedir(), '.local', 'share', 'opencode');
+    if (fs.existsSync(opencodeDataDir)) {
+      fs.rmSync(opencodeDataDir, { recursive: true, force: true });
+    }
+    
+    // 清空 Skills 目录
+    const skillsDir = process.platform === 'win32'
+      ? path.join(process.env.USERPROFILE, '.agents', 'skills')
+      : path.join(os.homedir(), '.agents', 'skills');
+    if (fs.existsSync(skillsDir)) {
+      fs.rmSync(skillsDir, { recursive: true, force: true });
+    }
+    
     // 重置配置文件
     const defaultConfig = {
       npmRegistry: '',

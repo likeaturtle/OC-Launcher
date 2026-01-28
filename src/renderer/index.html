@@ -43,9 +43,9 @@
             <span>运行环境</span>
           </div>
           <ul class="nav-submenu">
-            <li class="submenu-item" data-target="setup-nodejs">Node.js 环境</li>
-            <li class="submenu-item" data-target="setup-npm">npm 源配置</li>
-            <li class="submenu-item" data-target="setup-opencode">OpenCode 安装</li>
+            <li class="submenu-item" data-target="setup-nodejs">Node.js</li>
+            <li class="submenu-item" data-target="setup-npm">NPM 源</li>
+            <li class="submenu-item" data-target="setup-opencode">OpenCode</li>
             <li class="submenu-item" data-target="setup-reset">重置环境</li>
           </ul>
         </li>
@@ -130,11 +130,11 @@
             <span class="status-value" id="nodejs-status">未检测</span>
           </div>
           <div class="status-item">
-            <span class="status-label">npm 状态</span>
+            <span class="status-label">NPM 状态</span>
             <span class="status-value" id="npm-status">未检测</span>
           </div>
           <div class="status-item">
-            <span class="status-label">npm 源</span>
+            <span class="status-label">NPM 源</span>
             <span class="status-value" id="npm-registry">未配置</span>
           </div>
           <div class="status-item">
@@ -146,10 +146,10 @@
         <div class="work-dir-section" id="home-workdir">
           <h3><i class="fas fa-folder-open"></i> OpenCode 工作目录</h3>
           <div class="input-group">
-            <input type="text" id="work-dir" placeholder="此处显示目录将作为 OpenCode 工作目录">
+            <input type="text" id="work-dir" placeholder="此处显示路径的目录将作为 OpenCode 工作目录">
             <button class="btn btn-primary" id="select-dir-btn">选择目录</button>
           </div>
-          <p class="input-hint"><i class="fas fa-lightbulb"></i> 可点击按钮选择，同时支持手动输入路径或拖拽上传</p>
+          <p class="input-hint"><i class="fas fa-lightbulb"></i> 支持点击按钮选择 / 手动输入路径 / 拖拽目录上传</p>
         </div>
 
         <div class="actions" id="home-actions">
@@ -159,7 +159,7 @@
           </button>
           <button class="btn btn-streaming btn-large" id="launch-web-btn" disabled>
             <span class="btn-icon"><i class="fas fa-globe"></i></span>
-            <span class="btn-text">启动 Web 界面</span>
+            <span class="btn-text">启动 WEB 界面</span>
           </button>
         </div>
 
@@ -168,28 +168,27 @@
       <!-- 环境设置页 -->
       <div class="page" id="page-setup">
         <div class="page-header">
-          <h2>运行环境设置</h2>
-          <p class="subtitle">配置 Node.js + npm 环境和 OpenCode 安装，支持重置运行环境</p>
+          <h2> OpenCode 运行环境配置</h2>
         </div>
 
         <div class="setup-steps">
           <div class="setup-step" id="setup-nodejs">
             <div class="step-header">
               <span class="step-number"><i class="fa-brands fa-node-js"></i></span>
-              <h3>Node.js 环境</h3>
+              <h3>Node.js 环境安装</h3>
             </div>
-            <p>解压并配置独立的 Node.js 运行时（Node.js Runtime）。</p>
+            <p>解压并配置独立于本机的 Node.js 环境</p>
             <button class="btn btn-primary" id="extract-nodejs-btn">解压 Node.js</button>
           </div>
 
           <div class="setup-step" id="setup-npm">
             <div class="step-header">
               <span class="step-number"><i class="fa-brands fa-npm"></i></i></span>
-              <h3>npm 源配置</h3>
+              <h3>NPM 源配置</h3>
             </div>
-            <p>首次解压 Node.js 环境默认为官方源，可能存在访问缓慢情况，建议进行修改。</p>
+            <p>首次解压 Node.js 环境默认为官方源，中国内地可能存在访问缓慢情况，建议修改</p>
             <div class="input-group">
-              <input type="text" id="npm-registry-input" placeholder="npm 源地址" value="https://registry.npmmirror.com">
+              <input type="text" id="npm-registry-input" placeholder="NPM 源地址" value="https://registry.npmmirror.com">
               <div class="preset-registries">
                 <button class="btn btn-link" data-registry="https://registry.npmmirror.com">阿里源</button>
                 <button class="btn btn-link" data-registry="https://mirrors.cloud.tencent.com/npm/">腾讯源</button>
@@ -197,15 +196,15 @@
                 <button class="btn btn-link" data-registry="https://registry.npmjs.org">官方源</button>
               </div>
             </div>
-            <button class="btn btn-primary" id="configure-npm-btn">设置 npm 源</button>
+            <button class="btn btn-primary" id="configure-npm-btn">设置 NPM 源</button>
           </div>
 
           <div class="setup-step" id="setup-opencode">
             <div class="step-header">
               <span class="step-number"><i class="fa-brands fa-instalod"></i></span>
-              <h3>安装 / 更新 OpenCode</h3>
+              <h3>OpenCode 软件操作</h3>
             </div>
-            <p>使用独立 Node.js 环境安装 / 更新 OpenCode</p>
+            <p>使用独立 Node.js 环境安装 / 更新 / 卸载 OpenCode</p>
             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
               <button class="btn btn-primary" id="install-opencode-btn">安装 / 更新 OpenCode</button>
               <button class="btn btn-secondary" id="uninstall-opencode-btn">卸载 OpenCode</button>
@@ -226,8 +225,13 @@
               <span class="step-number" style="background-color: #d32f2f;"><i class="fa-solid fa-bolt"></i></span>
               <h3 style="color: #d32f2f;">重置环境</h3>
             </div>
-            <div class="step-content-horizontal">
-              <p style="color: #d32f2f; margin-bottom: 0;">此操作将清空当前用户数据目录全部内容，操作不可逆请谨慎进行！</p>
+            <p style="color: #d32f2f; margin-top: 20px; margin-bottom: 20px; margin-left: 0; padding-left: 20px; font-weight: bold;">重置环境将清空下列数据：</p>
+            <p style="color: #d32f2f; margin-bottom: 8px; margin-left: 0; padding-left: 40px; font-size: 13px;">• Node.js 和 OpenCode 环境文件：<code id="reset-nodejs-path" style="color: #d32f2f; background: rgba(211, 47, 47, 0.15); padding: 2px 6px; border-radius: 3px; font-size: 12px;"></code></p>
+            <p style="color: #d32f2f; margin-bottom: 8px; margin-left: 0; padding-left: 40px; font-size: 13px;">• OpenCode 配置文件：<code id="reset-config-path" style="color: #d32f2f; background: rgba(211, 47, 47, 0.15); padding: 2px 6px; border-radius: 3px; font-size: 12px;"></code></p>
+            <p style="color: #d32f2f; margin-bottom: 8px; margin-left: 0; padding-left: 40px; font-size: 13px;">• OpenCode 鉴权文件：<code id="reset-auth-path" style="color: #d32f2f; background: rgba(211, 47, 47, 0.15); padding: 2px 6px; border-radius: 3px; font-size: 12px;"></code></p>
+            <p style="color: #d32f2f; margin-bottom: 8px; margin-left: 0; padding-left: 40px; font-size: 13px;">• Skills 主文件目录：<code id="reset-skills-path" style="color: #d32f2f; background: rgba(211, 47, 47, 0.15); padding: 2px 6px; border-radius: 3px; font-size: 12px;"></code></p>
+            <p style="color: #d32f2f; margin-top: 20px; margin-bottom: 20px; margin-left: 0; padding-left: 20px; font-weight: bold;">重置操作不可逆，请谨慎进行！</p>
+            <div style="display: flex; justify-content: flex-end;">
               <button class="btn btn-primary" id="reset-env-btn" style="background-color: #d32f2f; border-color: #d32f2f;">重置环境</button>
             </div>
           </div>
@@ -237,8 +241,7 @@
       <!-- 配置管理页 -->
       <div class="page" id="page-config">
         <div class="page-header">
-          <h2>OpenCode 配置文件</h2>
-          <p class="subtitle">可视化编辑 OpenCode 配置文件</p>
+          <h2>OpenCode 配置文件管理</h2>
         </div>
 
         <div class="setup-steps">
@@ -247,7 +250,7 @@
               <span class="step-number"><i class="fas fa-file-code"></i></span>
               <h3>配置文件（config.json）</h3>
             </div>
-            <p>为 OpenCode 生成默认配置文件，存储在 <code>~/.config/opencode/opencode.json</code></p>
+            <p>生成 OpenCode 默认配置文件，作为主配置文件定义模型提供商、工具和能力等</p>
             <div style="display: flex; gap: 10px;">
               <button class="btn btn-primary" id="generate-config-btn">生成默认配置文件</button>
               <button class="btn btn-secondary" id="open-config-dir-btn"><i class="fas fa-folder-open"></i> 打开配置文件目录</button>
@@ -260,7 +263,7 @@
               <span class="step-number"><i class="fas fa-key"></i></span>
               <h3>鉴权文件（auth.json）</h3>
             </div>
-            <p>为 OpenCode 生成默认鉴权文件,存储在 <code>~/.local/share/opencode/auth.json</code></p>
+            <p>生成 OpenCode 默认鉴权文件，储存身份验证相关数据，如应用 API Key、OAuth 令牌等</code></p>
             <div style="display: flex; gap: 10px;">
               <button class="btn btn-primary" id="generate-auth-btn">生成默认鉴权文件</button>
               <button class="btn btn-secondary" id="open-auth-dir-btn"><i class="fas fa-folder-open"></i> 打开鉴权文件目录</button>
@@ -285,8 +288,7 @@
       <!-- 模型管理页 -->
       <div class="page" id="page-models">
         <div class="page-header">
-          <h2>模型管理</h2>
-          <p class="subtitle">管理第三方模型服务商和模型</p>
+          <h2>模型及提供方管理</h2>
         </div>
 
         <div class="setup-steps">
@@ -299,7 +301,7 @@
             <!-- 第一部分: API Key 设置 -->
             <div class="model-section">
               <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                <h4 style="margin: 0;">API Key 设置</h4>
+                <h4 style="margin: 5px 0px;">API Key 设置</h4>
                 <div id="zen-auth-status" style="display: none;">
                   <p style="font-size: 12px; color: #4ec9b0; margin: 0; display: flex; align-items: center; gap: 6px;">
                     <i class="fas fa-check-circle"></i>
@@ -317,7 +319,7 @@
                 </p>
               </div>
               <div class="input-item">
-                <label for="zen-api-key">OpenCode Zen API Key</label>
+                <!-- <label for="zen-api-key">OpenCode Zen API Key</label> -->
                 <div style="display: flex; gap: 10px; margin-bottom: 8px; width: 100%;">
                   <input type="password" id="zen-api-key" placeholder="输入 OpenCode Zen API Key" style="flex: 1;">
                   <button class="btn btn-primary" id="save-zen-auth-btn" style="white-space: nowrap;">确认</button>
@@ -431,8 +433,7 @@
       <!-- MCP 服务器页 -->
       <div class="page" id="page-mcp">
         <div class="page-header">
-          <h2>MCP 服务器管理及管理</h2>
-          <p class="subtitle">配置和管理 Model Context Protocol 服务器</p>
+          <h2>MCP 服务</h2>
         </div>
         <div class="placeholder-content">
           <div class="placeholder-icon"><i class="fas fa-plug"></i></div>
@@ -444,18 +445,17 @@
       <!-- Skills 配置页 -->
       <div class="page" id="page-skills">
         <div class="page-header">
-          <h2>Skills 能力配置及管理</h2>
-          <p class="subtitle">精品及定制化 Skills 管理和扩展</p>
+          <h2>Skills · 妙计管理</h2>
         </div>
 
         <!-- Skills 项目目录模块 -->
         <div class="work-dir-section" id="skills-project-dir">
           <h3><i class="fas fa-folder-open"></i> Skills 项目目录</h3>
           <div class="input-group">
-            <input type="text" id="skill-install-dir" placeholder="请选择或输入 Skills 安装目录">
+            <input type="text" id="skill-install-dir" placeholder="此处显示路径的目录将作为 Skill 项目安装的目标目录">
             <button class="btn btn-primary" id="select-skill-dir-btn">选择目录</button>
           </div>
-          <p class="input-hint"><i class="fas fa-lightbulb"></i> 可点击按钮选择，同时支持手动输入路径或拖拽上传</p>
+          <p class="input-hint"><i class="fas fa-lightbulb"></i> 支持点击按钮选择 / 手动输入路径 / 拖拽目录上传</p>
         </div>
 
         <div class="setup-steps">
@@ -466,12 +466,21 @@
             </div>
             
             <div class="skill-install-section" style="padding-top: 5px;">
-              <h4 style="margin: 0 0 15px 0; font-size: 16px;">关键词查询 Skill</h4>
+              <h4 style="margin: 0 0 15px 0; font-size: 16px; display: flex; align-items: center;">
+                关键词查询 Skill
+                <span class="skill-help-wrapper">
+                  <i class="far fa-question-circle skill-help-icon"></i>
+                  <div class="skill-tooltip">
+                    <div class="skill-tooltip-content">
+                      <p style="margin: 0;">支持输入任意内容，查询将匹配输入内容至 Skill 所在库名或 Skill 名称，请尽可能详细以提高查询准确性</p>
+                    </div>
+                  </div>
+                </span>
+              </h4>
               <div class="input-group">
                 <input type="text" id="skill-search-input" placeholder="输入要查询的 skill 关键词">
                 <button class="btn btn-primary" id="search-skill-btn">查询 Skill</button>
               </div>
-              <p class="input-hint"><i class="fas fa-info-circle"></i> 执行 npx skills find 命令进行查询</p>
             </div>
             
             <!-- 查询结果表格 -->
@@ -502,12 +511,27 @@
 
             <!-- 分析可用 skill -->
             <div class="skill-install-section">
-              <h4 style="margin: 0 0 15px 0; font-size: 16px;">分析可用 Skill</h4>
+              <h4 style="margin: 0 0 15px 0; font-size: 16px; display: flex; align-items: center;">
+                分析可用 Skill
+                <span class="skill-help-wrapper">
+                  <i class="far fa-question-circle skill-help-icon"></i>
+                  <div class="skill-tooltip">
+                    <div class="skill-tooltip-content">
+                      <p style="margin: 0 0 8px 0;">输入框中支持输入以下内容：</p>
+                      <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">1. GitHub shorthand ，格式为 owner/repo，例如 vercel-labs/agent-skills</p>
+                      <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">2. GitHub URL，例如 https://github.com/vercel-labs/agent-skills</p>
+                      <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">3. GitHub repo，例如 https://github.com/vercel-labs/agent-skills/tree/main/skills/frontend-design</p>
+                      <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">4. GitLab URL，例如 https://gitlab.com/org/repo</p>
+                      <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">5. 任何 git URL，例如 git@github.com:vercel-labs/agent-skills.git</p>
+                      <p style="margin: 0; padding-left: 1em; text-indent: -1em;">6. 本地文件路径，例如 my-local-skills</p>
+                    </div>
+                  </div>
+                </span>
+              </h4>
               <div class="input-group">
                 <input type="text" id="analyze-skill-input" placeholder="输入 GitHub 仓库地址或留空分析全部（例如：owner/repo）">
                 <button class="btn btn-primary" id="analyze-skills-btn">分析 Skill</button>
               </div>
-              <p class="input-hint"><i class="fas fa-info-circle"></i> 执行 npx skills add &lt;输入内容&gt; --list 命令分析可用的 Skills，留空则执行 npx skills list</p>
             </div>
 
             <!-- 分析结果表格 -->
@@ -541,8 +565,24 @@
             
             <!-- Skill 安装地址 -->
             <div class="skill-install-section" style="padding-top: 5px;">
-              <div style="display: flex; align-items: center; margin-bottom: 10px; gap: 20px;">
-                <h4 style="font-size: 14px; color: #cccccc; margin: 0;">Skill 安装地址</h4>
+              <div style="display: flex; align-items: center; margin-bottom: 15px; gap: 20px;">
+                <h4 style="font-size: 14px; color: #cccccc; margin: 0; display: flex; align-items: center;">
+                  Skill 安装地址
+                  <span class="skill-help-wrapper">
+                    <i class="far fa-question-circle skill-help-icon"></i>
+                    <div class="skill-tooltip">
+                      <div class="skill-tooltip-content">
+                        <p style="margin: 0 0 8px 0;">输入框中支持输入以下内容：</p>
+                        <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">1. GitHub shorthand ，格式为 owner/repo，例如 vercel-labs/agent-skills</p>
+                        <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">2. GitHub URL，例如 https://github.com/vercel-labs/agent-skills</p>
+                        <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">3. GitHub repo，例如 https://github.com/vercel-labs/agent-skills/tree/main/skills/frontend-design</p>
+                        <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">4. GitLab URL，例如 https://gitlab.com/org/repo</p>
+                        <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">5. 任何 git URL，例如 git@github.com:vercel-labs/agent-skills.git</p>
+                        <p style="margin: 0;">6. 本地文件路径，例如 my-local-skills</p>
+                      </div>
+                    </div>
+                  </span>
+                </h4>
                 <!-- 全局安装滑动按钮 -->
                 <label class="toggle-switch">
                   <input type="checkbox" id="skill-global-install">
@@ -554,7 +594,6 @@
                 <input type="text" id="skill-install-url" placeholder="输入 Skill 安装地址，如：@opencode/skill-pdf">
                 <button class="btn btn-primary" id="install-skill-btn">安装 Skill</button>
               </div>
-              <p class="input-hint"><i class="fas fa-info-circle"></i> 支持 npm 包名、GitHub 仓库地址等格式</p>
               
               <!-- Skills 管理功能按钮 -->
               <div style="margin-top: 15px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
@@ -565,7 +604,6 @@
                   <i class="fas fa-arrow-up"></i> 升级 Skill
                 </button>
               </div>
-              <p class="input-hint" style="margin-top: 8px;"><i class="fas fa-info-circle"></i> 注：以上两个按钮仅用于检查和升级全局安装的 Skill，不需要指定 Skills 项目目录</p>
             </div>
 
             <div class="step-status" id="skill-install-status"></div>
@@ -578,7 +616,6 @@
       <div class="page" id="page-settings">
         <div class="page-header">
           <h2>通用设置</h2>
-          <p class="subtitle">管理 OC-Launcher 应用设置</p>
         </div>
         
         <div class="placeholder-content">
@@ -637,11 +674,11 @@
   <div id="parse-modal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>智能解析示例代码</h3>
+        <h3>示例代码智能解析</h3>
         <button class="modal-close" id="close-parse-modal">&times;</button>
       </div>
       <div class="modal-body">
-        <p style="margin-bottom: 10px; color: #cccccc; font-size: 0.9em;">将包含 base_url 和 model 的示例代码（如 Python/OpenAI SDK 代码）粘贴到下方：</p>
+        <p style="margin-bottom: 10px; color: #cccccc; font-size: 0.9em;">将大模型示例代码（如 Python/OpenAI SDK 代码）粘贴到下方：</p>
         <textarea id="parse-code-input" style="width: 100%; height: 200px; background: #1e1e1e; border: 1px solid #3c3c3c; color: #ffffff; padding: 10px; border-radius: 4px; resize: vertical; font-family: 'Consolas', 'Monaco', monospace;" placeholder="例如:
 client = OpenAI(
     api_key='your_key',
