@@ -286,6 +286,83 @@ function getNpmRegistry() {
   });
 }
 
+// 获取 npm 上 opencode-ai 的最新版本
+function getLatestOpencodeVersion() {
+  return new Promise((resolve, reject) => {
+    const { nodePath, npmCliPath, nodeBinPath } = getNodeExecutionPaths();
+    
+    if (!fs.existsSync(nodePath)) {
+      return resolve(null);
+    }
+    if (!fs.existsSync(npmCliPath)) {
+      return resolve(null);
+    }
+
+    ensureNodejsPermissions();
+    
+    // 设置环境变量
+    const env = { ...process.env, PREFIX: NODEJS_PATH };
+    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+    const currentPath = env[pathKey] || env.PATH || env.Path || '';
+    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
+    env.PATH = env[pathKey];
+    env.Path = env[pathKey];
+    
+    const child = spawn(nodePath, [npmCliPath, 'view', 'opencode-ai', 'version'], { env });
+    
+    let stdout = '';
+    let stderr = '';
+    
+    child.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+    
+    child.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    child.on('error', (err) => {
+      console.error('[版本检查] 获取最新版本失败:', err);
+      resolve(null);
+    });
+    
+    child.on('close', (code) => {
+      if (code === 0) {
+        const version = stdout.trim();
+        console.log('[版本检查] npm 最新版本:', version);
+        resolve(version || null);
+      } else {
+        console.error('[版本检查] npm view 命令失败:', stderr);
+        resolve(null);
+      }
+    });
+  });
+}
+
+// 比较两个版本号，返回 1 表示 v1 > v2，返回 -1 表示 v1 < v2，返回 0 表示相等
+function compareVersions(v1, v2) {
+  if (!v1 || !v2) return 0;
+  
+  // 移除 'v' 前缀（如果存在）
+  const cleanV1 = v1.replace(/^v/, '');
+  const cleanV2 = v2.replace(/^v/, '');
+  
+  const parts1 = cleanV1.split('.').map(n => parseInt(n, 10));
+  const parts2 = cleanV2.split('.').map(n => parseInt(n, 10));
+  
+  const maxLength = Math.max(parts1.length, parts2.length);
+  
+  for (let i = 0; i < maxLength; i++) {
+    const num1 = parts1[i] || 0;
+    const num2 = parts2[i] || 0;
+    
+    if (num1 > num2) return 1;
+    if (num1 < num2) return -1;
+  }
+  
+  return 0;
+}
+
 // 配置 npm 源
 function configureNpmRegistry(registry) {
   return new Promise((resolve, reject) => {
@@ -668,9 +745,10 @@ ipcMain.handle('check-npm', async () => {
   const extracted = config.nodejsExtracted && fs.existsSync(nodePath);
   
   let version = null;
+  let npmPath = null;
   if (extracted) {
     try {
-      const npmPath = path.join(nodeBinPath, process.platform === 'win32' ? 'npm.cmd' : 'npm');
+      npmPath = path.join(nodeBinPath, process.platform === 'win32' ? 'npm.cmd' : 'npm');
       if (fs.existsSync(npmPath)) {
         version = require('child_process').execSync(`"${npmPath}" -v`).toString().trim();
       }
@@ -681,7 +759,8 @@ ipcMain.handle('check-npm', async () => {
 
   return {
     extracted: extracted && version !== null,
-    version: version
+    version: version,
+    path: npmPath
   };
 });
 
@@ -714,6 +793,76 @@ ipcMain.handle('check-opencode', async () => {
     path: OPENCODE_PATH,
     version: version
   };
+});
+
+ipcMain.handle('check-opencode-update', async () => {
+  try {
+    // 检查 OpenCode 是否已安装
+    const opencodeCheck = await ipcMain.emit('check-opencode');
+    const config = initConfig();
+    const opencodePath = path.join(OPENCODE_PATH, process.platform === 'win32' ? 'opencode.cmd' : 'bin/opencode');
+    const installed = config.opencodeInstalled && fs.existsSync(opencodePath);
+    
+    if (!installed) {
+      return { 
+        success: false, 
+        error: 'OpenCode 未安装',
+        hasUpdate: false 
+      };
+    }
+    
+    // 获取本地版本
+    let localVersion = null;
+    try {
+      const { nodeBinPath } = getNodeExecutionPaths();
+      const childProcess = require('child_process');
+      const env = { ...process.env };
+      const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+      const currentPath = env[pathKey] || env.PATH || env.Path || '';
+      env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
+      env.PATH = env[pathKey];
+      env.Path = env[pathKey];
+      localVersion = childProcess.execSync(`"${opencodePath}" -v`, { env }).toString().trim();
+    } catch (e) {
+      console.error('[版本检查] 获取本地版本失败:', e);
+      return { 
+        success: false, 
+        error: '获取本地版本失败',
+        hasUpdate: false 
+      };
+    }
+    
+    // 获取最新版本
+    const latestVersion = await getLatestOpencodeVersion();
+    
+    if (!latestVersion) {
+      return { 
+        success: false, 
+        error: '获取最新版本失败',
+        hasUpdate: false 
+      };
+    }
+    
+    // 比较版本
+    const comparison = compareVersions(latestVersion, localVersion);
+    const hasUpdate = comparison > 0;
+    
+    console.log('[版本检查] 本地版本:', localVersion, '最新版本:', latestVersion, '需要更新:', hasUpdate);
+    
+    return {
+      success: true,
+      hasUpdate: hasUpdate,
+      localVersion: localVersion,
+      latestVersion: latestVersion
+    };
+  } catch (error) {
+    console.error('[版本检查] 检查更新失败:', error);
+    return { 
+      success: false, 
+      error: error.message,
+      hasUpdate: false 
+    };
+  }
 });
 
 ipcMain.handle('extract-nodejs', async () => {
@@ -1295,6 +1444,89 @@ ipcMain.handle('install-skill', async (event, installDir, skillUrl, isGlobal = f
   });
 });
 
+// 从分析列表安装 Skill
+ipcMain.handle('install-skill-from-list', async (event, repoPath, skillName, isGlobal = false, installDir = null) => {
+  return new Promise((resolve, reject) => {
+    // 只有非全局安装时才检查和创建目录
+    if (!isGlobal && installDir) {
+      if (!fs.existsSync(installDir)) {
+        try {
+          fs.mkdirSync(installDir, { recursive: true });
+          console.log(`[Skill 安装] 已创建目录: ${installDir}`);
+        } catch (err) {
+          return resolve({ 
+            success: false, 
+            error: `无法创建目录: ${err.message}` 
+          });
+        }
+      }
+    }
+
+    ensureNodejsPermissions();
+    const { nodePath, nodeBinPath } = getNodeExecutionPaths();
+
+    // 设置环境变量
+    const env = { ...process.env };
+    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+    const currentPath = env[pathKey] || env.PATH || env.Path || '';
+    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
+    env.PATH = env[pathKey];
+    env.Path = env[pathKey];
+    
+    // 获取 npx 路径
+    const npxPath = process.platform === 'win32' 
+      ? path.join(NODEJS_PATH, 'npx.cmd')
+      : path.join(NODEJS_PATH, 'bin/npx');
+    
+    console.log(`[Skill 安装] 安装 ${skillName} 从 ${repoPath}${isGlobal ? ' (全局)' : ` 到 ${installDir}`}`);
+    
+    // 构建命令: npx skills add repoPath --skill skillName -a opencode -y [-g]
+    const args = ['skills', 'add', repoPath, '--skill', skillName, '-a', 'opencode', '-y'];
+    
+    if (isGlobal) {
+      args.push('-g'); // 如果全局安装，添加 -g 参数
+    }
+    
+    console.log(`[Skill 安装] 执行命令: npx ${args.join(' ')}`);
+    
+    // 全局安装时使用当前工作目录，否则使用指定的安装目录
+    const workingDir = isGlobal ? process.cwd() : (installDir || process.cwd());
+    
+    const child = spawn(npxPath, args, {
+      cwd: workingDir,
+      env,
+      shell: process.platform === 'win32' // Windows 需要 shell
+    });
+    
+    child.on('error', (err) => {
+      resolve({ success: false, error: err.message });
+    });
+    
+    let output = '';
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('skill-install-progress', data.toString());
+      }
+    });
+    
+    child.stderr.on('data', (data) => {
+      output += data.toString();
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('skill-install-progress', data.toString());
+      }
+    });
+    
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve({ success: true, output });
+      } else {
+        resolve({ success: false, error: `安装失败 (退出码: ${code})\n${output}` });
+      }
+    });
+  });
+});
+
 // 检查 Skill 更新
 ipcMain.handle('check-skill-update', async (event, installDir) => {
   return new Promise((resolve, reject) => {
@@ -1466,7 +1698,7 @@ ipcMain.handle('search-skill', async (event, keyword) => {
 });
 
 // 分析可用 Skill
-ipcMain.handle('analyze-skills', async () => {
+ipcMain.handle('analyze-skills', async (event, repoPath) => {
   return new Promise((resolve, reject) => {
     ensureNodejsPermissions();
     const { nodePath, nodeBinPath } = getNodeExecutionPaths();
@@ -1482,9 +1714,21 @@ ipcMain.handle('analyze-skills', async () => {
       ? path.join(NODEJS_PATH, 'npx.cmd')
       : path.join(NODEJS_PATH, 'bin/npx');
     
-    console.log('[Skill 分析] 开始分析可用 Skills');
+    // 根据是否有输入内容，构建不同的命令
+    let command;
+    let args;
     
-    const child = spawn(npxPath, ['skills', 'list'], {
+    if (repoPath && repoPath.trim()) {
+      // 有输入内容：执行 npx skills add <repoPath> --list
+      console.log('[Skill 分析] 开始分析仓库:', repoPath);
+      args = ['skills', 'add', repoPath.trim(), '--list'];
+    } else {
+      // 无输入内容：执行 npx skills list
+      console.log('[Skill 分析] 开始分析可用 Skills');
+      args = ['skills', 'list'];
+    }
+    
+    const child = spawn(npxPath, args, {
       env,
       shell: process.platform === 'win32'
     });
@@ -1512,7 +1756,15 @@ ipcMain.handle('analyze-skills', async () => {
       if (code === 0) {
         // 解析输出，提取 skill 信息
         try {
-          const skills = parseSkillListOutput(output);
+          let skills;
+          // 根据命令类型使用不同的解析函数
+          if (repoPath && repoPath.trim()) {
+            // npx skills add --list 的输出，使用新的解析函数
+            skills = parseSkillAddListOutput(output);
+          } else {
+            // npx skills list 的输出，使用原有的解析函数
+            skills = parseSkillListOutput(output);
+          }
           console.log('[Skill 分析] 解析结果:', JSON.stringify(skills, null, 2));
           resolve({ success: true, skills });
         } catch (parseError) {
@@ -1526,6 +1778,108 @@ ipcMain.handle('analyze-skills', async () => {
     });
   });
 });
+
+// 解析 npx skills add --list 的输出
+function parseSkillAddListOutput(output) {
+  const skills = [];
+  
+  if (!output || output.trim().length === 0) {
+    console.log('[解析 Add List] 输出为空');
+    return skills;
+  }
+  
+  console.log('[解析 Add List] 开始解析，输出长度:', output.length);
+  
+  // 移除 ANSI 转义码
+  let cleanOutput = output.replace(/\x1B\[[0-9;]*m/g, '');
+  
+  // 查找 "Available Skills" 后的内容
+  const availableSkillsMatch = cleanOutput.match(/Available Skills[\s\S]*/i);
+  if (!availableSkillsMatch) {
+    console.log('[解析 Add List] 未找到 "Available Skills" 标记');
+    return skills;
+  }
+  
+  // 提取 "Available Skills" 之后的内容
+  const skillsContent = availableSkillsMatch[0];
+  const lines = skillsContent.split('\n');
+  
+  console.log('[解析 Add List] 找到 Available Skills 后的内容，总行数:', lines.length);
+  
+  let currentSkillName = null;
+  let currentDescriptionLines = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    let line = lines[i];
+    
+    // 移除行首的装饰符（│、├、└、┌ 等）和多余空格
+    line = line.replace(/^[│├└┌┐┤┴┬┼╔╗╚╝║═╠╣╦╩╬\s]+/, '').trim();
+    
+    // 跳过空行
+    if (!line) {
+      continue;
+    }
+    
+    // 跳过 ASCII 艺术字
+    if (line.includes('███') || line.match(/^[█╗╔╚═║╝╠╣╦╩╬\s]+$/)) {
+      continue;
+    }
+    
+    // 跳过提示行
+    if (line.match(/^Use\s+--/i) || line.match(/^Source:/i) || line.match(/^Repository/i) || line.match(/^Found\s+\d+/i)) {
+      console.log('[解析 Add List] 跳过提示行:', line);
+      continue;
+    }
+    
+    // 判断是 skill 名称还是描述内容
+    // Skill 名称特征：
+    // 1. 较短（通常 < 60 字符）
+    // 2. 不包含句号
+    // 3. 通常是 kebab-case 格式（如 vercel-composition-patterns）
+    // 4. 不以大写字母开头（描述通常以大写字母开头）
+    
+    const looksLikeSkillName = (
+      line.length < 60 &&
+      !line.includes('.') &&
+      !line.includes(',') &&
+      line.match(/^[a-z][a-z0-9-]*$/) // kebab-case 格式
+    );
+    
+    if (looksLikeSkillName) {
+      // 如果已经有当前 skill，先保存它
+      if (currentSkillName && currentDescriptionLines.length > 0) {
+        skills.push({
+          name: currentSkillName,
+          description: currentDescriptionLines.join(' ').trim()
+        });
+        console.log('[解析 Add List] 保存 skill:', currentSkillName);
+      }
+      
+      // 开始新的 skill
+      currentSkillName = line;
+      currentDescriptionLines = [];
+      console.log('[解析 Add List] 识别到 skill 名称:', currentSkillName);
+    } else if (currentSkillName) {
+      // 这是描述的一部分
+      currentDescriptionLines.push(line);
+    } else {
+      // 还没有遇到 skill 名称，跳过
+      console.log('[解析 Add List] 跳过未识别的行:', line.substring(0, 50));
+    }
+  }
+  
+  // 处理最后一个 skill
+  if (currentSkillName && currentDescriptionLines.length > 0) {
+    skills.push({
+      name: currentSkillName,
+      description: currentDescriptionLines.join(' ').trim()
+    });
+    console.log('[解析 Add List] 保存最后一个 skill:', currentSkillName);
+  }
+  
+  console.log('[解析 Add List] 最终解析出的 skills 数量:', skills.length);
+  return skills;
+}
 
 // 解析 npx skills find 的输出
 function parseSkillFindOutput(output) {

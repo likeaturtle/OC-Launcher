@@ -73,10 +73,26 @@ document.querySelectorAll('.nav-item').forEach(item => {
       submenuItem.addEventListener('click', (e) => {
         e.stopPropagation();
         const target = submenuItem.dataset.target;
+        const page = item.dataset.page;
+        
+        // 更新导航项激活状态
+        document.querySelectorAll('.nav-item').forEach(navItem => navItem.classList.remove('active'));
+        item.classList.add('active');
+        
+        // 展开当前菜单
+        if (!item.classList.contains('expanded')) {
+          item.classList.add('expanded');
+        }
         
         // 更新子菜单激活状态
         document.querySelectorAll('.submenu-item').forEach(sub => sub.classList.remove('active'));
         submenuItem.classList.add('active');
+        
+        // 切换到对应页面
+        if (page) {
+          document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+          document.getElementById(`page-${page}`).classList.add('active');
+        }
         
         // 跳转到对应模块
         if (target) {
@@ -360,11 +376,13 @@ async function updateStatus() {
     let statusText = npmCheck.version ? `${npmCheck.version}` : '';
     npmStatus.innerHTML = `<i class="fas fa-check-circle"></i> 已配置${statusText ? '（' + statusText + '）' : ''}`;
     npmStatus.style.color = '#4ec9b0';
-    npmItem.dataset.tooltip = 'npm 包管理工具';
+    npmItem.dataset.tooltip = '点击即可复制 npm 安装地址';
+    npmItem.onclick = () => copyToClipboard(npmCheck.path, 'npm 安装位置');
   } else {
     npmStatus.textContent = '未配置';
     npmStatus.style.color = '#858585';
     npmItem.dataset.tooltip = '';
+    npmItem.onclick = null;
   }
   
   // 使用新的 checkOpenCode API
@@ -1564,6 +1582,8 @@ window.addEventListener('DOMContentLoaded', () => {
   initialize();
   setupTooltip();
   setupSkillsPage();
+  // 启动时检查 OpenCode 更新
+  checkOpenCodeUpdate();
 });
 
 // 设置全局 Tooltip 跟随鼠标
@@ -1592,6 +1612,125 @@ function setupTooltip() {
       tooltip.classList.remove('active');
     }
   });
+}
+
+// 检查 OpenCode 更新
+async function checkOpenCodeUpdate() {
+  try {
+    console.log('[版本检查] 开始检查 OpenCode 更新...');
+    
+    const result = await window.electronAPI.checkOpenCodeUpdate();
+    
+    if (!result.success) {
+      console.log('[版本检查] 检查失败:', result.error);
+      return;
+    }
+    
+    if (result.hasUpdate) {
+      console.log(`[版本检查] 发现新版本: ${result.latestVersion} (当前: ${result.localVersion})`);
+      showUpdateNotification(result.latestVersion);
+    } else {
+      console.log(`[版本检查] 已是最新版本: ${result.localVersion}`);
+    }
+  } catch (error) {
+    console.error('[版本检查] 检查失败:', error);
+  }
+}
+
+// 显示更新通知
+function showUpdateNotification(latestVersion) {
+  const notification = document.getElementById('update-notification');
+  const notificationTitle = document.getElementById('update-notification-title');
+  const closeBtn = document.getElementById('close-notification');
+  
+  if (!notification) {
+    console.error('[版本检查] 找不到通知元素');
+    return;
+  }
+  
+  // 设置通知标题
+  notificationTitle.textContent = `检测到 OpenCode 新版本 ${latestVersion}`;
+  
+  // 显示通知
+  notification.style.display = 'flex';
+  
+  // 关闭按钮事件（使用事件捕获，优先处理）
+  closeBtn.onclick = (e) => {
+    e.stopPropagation(); // 阻止事件冒泡到父元素
+    notification.style.display = 'none';
+    console.log('[版本检查] 用户关闭了更新通知');
+  };
+  
+  // 点击通知跳转到运行环境页面
+  notification.onclick = (e) => {
+    // 如果点击的是关闭按钮或其子元素，不跳转
+    if (e.target.closest('.close-notification')) {
+      return;
+    }
+    
+    console.log('[版本检查] 用户点击通知，准备跳转...');
+    
+    // 隐藏通知
+    notification.style.display = 'none';
+    
+    // 跳转到运行环境页面
+    const setupNavItem = document.querySelector('.nav-item[data-page="setup"]');
+    if (setupNavItem) {
+      console.log('[版本检查] 找到运行环境导航项');
+      
+      // 检查是否已在运行环境页面
+      const isActive = setupNavItem.classList.contains('active');
+      
+      if (!isActive) {
+        console.log('[版本检查] 切换到运行环境页面');
+        // 点击 nav-item-content 来触发页面切换
+        const navItemContent = setupNavItem.querySelector('.nav-item-content');
+        if (navItemContent) {
+          navItemContent.click();
+          console.log('[版本检查] 已触发页面切换');
+        } else {
+          console.error('[版本检查] 找不到 nav-item-content');
+        }
+      } else {
+        console.log('[版本检查] 已在运行环境页面');
+      }
+      
+      // 等待页面切换完成后滚动到 OpenCode 安装区域
+      setTimeout(() => {
+        const setupOpencode = document.getElementById('setup-opencode');
+        if (setupOpencode) {
+          console.log('[版本检查] 开始滚动到 OpenCode 安装模块');
+          
+          // 滚动到该模块，留出一些顶部空间
+          setupOpencode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // 添加高亮效果提示用户
+          setupOpencode.style.transition = 'background-color 0.3s ease';
+          setupOpencode.style.backgroundColor = 'rgba(0, 122, 204, 0.1)';
+          
+          // 2秒后移除高亮
+          setTimeout(() => {
+            setupOpencode.style.backgroundColor = '';
+          }, 2000);
+        } else {
+          console.error('[版本检查] 找不到 setup-opencode 元素');
+        }
+      }, 300);
+    } else {
+      console.error('[版本检查] 找不到运行环境导航项');
+    }
+  };
+  
+  // 10秒后自动关闭
+  setTimeout(() => {
+    if (notification.style.display !== 'none') {
+      notification.style.animation = 'slideOutRight 0.5s ease';
+      setTimeout(() => {
+        notification.style.display = 'none';
+        notification.style.animation = 'slideInRight 0.5s ease';
+      }, 500);
+    }
+  }, 10000);
 }
 
 // Skills 页面功能初始化
@@ -1628,6 +1767,61 @@ function setupSkillsPage() {
       skillInstallDir.value = result.path;
     }
   });
+
+  // 支持拖拽目录到 Skills 项目目录选择区域
+  const skillsProjectDirSection = document.getElementById('skills-project-dir');
+  
+  if (skillsProjectDirSection) {
+    skillsProjectDirSection.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      skillsProjectDirSection.classList.add('drag-over');
+    });
+
+    skillsProjectDirSection.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // 检查是否真正离开了区域（不是移动到子元素）
+      const rect = skillsProjectDirSection.getBoundingClientRect();
+      const x = e.clientX;
+      const y = e.clientY;
+      
+      if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+        skillsProjectDirSection.classList.remove('drag-over');
+      }
+    });
+
+    skillsProjectDirSection.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // 立即移除拖拽样式，避免卡顿感
+      skillsProjectDirSection.classList.remove('drag-over');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        // 获取第一个拖拽的文件/目录的路径
+        const path = files[0].path;
+        
+        // 使用 requestAnimationFrame 确保 UI 更新在下一帧执行
+        requestAnimationFrame(() => {
+          skillInstallDir.value = path;
+        });
+      }
+    });
+
+    // 全局监听 dragend，确保拖拽结束时移除样式
+    document.addEventListener('dragend', () => {
+      skillsProjectDirSection.classList.remove('drag-over');
+    });
+
+    document.addEventListener('drop', (e) => {
+      // 如果在区域外释放，也要移除样式
+      if (!skillsProjectDirSection.contains(e.target)) {
+        skillsProjectDirSection.classList.remove('drag-over');
+      }
+    });
+  }
 
   // 监听 Skill 安装进度
   let skillLogBuffer = ''; // 缓冲区，用于处理部分输出
@@ -1678,7 +1872,10 @@ function setupSkillsPage() {
           // 如果最后一行为空，直接追加
           modalLog.textContent += cleanData;
         }
-        modalLog.scrollTop = modalLog.scrollHeight;
+        // 使用 requestAnimationFrame 确保 DOM 更新后再滚动
+        requestAnimationFrame(() => {
+          modalLog.scrollTop = modalLog.scrollHeight;
+        });
         return;
       }
     }
@@ -1690,7 +1887,10 @@ function setupSkillsPage() {
     
     // 直接追加内容
     modalLog.textContent += cleanData;
-    modalLog.scrollTop = modalLog.scrollHeight;
+    // 使用 requestAnimationFrame 确保 DOM 更新后再滚动
+    requestAnimationFrame(() => {
+      modalLog.scrollTop = modalLog.scrollHeight;
+    });
   });
 
   // 安装 Skill
@@ -1735,6 +1935,9 @@ function setupSkillsPage() {
       const modalLog = document.getElementById('modal-install-log');
       if (modalLog) {
         modalLog.textContent += '\n>> 安装完成！';
+        requestAnimationFrame(() => {
+          modalLog.scrollTop = modalLog.scrollHeight;
+        });
       }
       skillInstallUrl.value = ''; // 清空输入框
     } else {
@@ -1746,19 +1949,9 @@ function setupSkillsPage() {
     closeBtn.disabled = false;
   });
 
-  // 检查 Skill 更新
+  // 检查 Skill 更新（仅全局）
   const checkSkillUpdateBtn = document.getElementById('check-skill-update-btn');
   checkSkillUpdateBtn.addEventListener('click', async () => {
-    const installDir = skillInstallDir.value.trim();
-    const isGlobalInstall = document.getElementById('skill-global-install').checked;
-
-    // 如果不是全局安装，才检查安装目录
-    if (!isGlobalInstall && !installDir) {
-      showNotification('请先指定 Skill 安装目录', 'error');
-      skillInstallDir.focus();
-      return;
-    }
-
     // 显示弹窗
     const modal = document.getElementById('skill-install-modal');
     const modalSkillName = document.getElementById('modal-skill-name');
@@ -1769,32 +1962,24 @@ function setupSkillsPage() {
     const modalLog = document.getElementById('modal-install-log');
     const closeBtn = document.getElementById('close-install-modal');
     
+    // 获取全局 Skill 目录
+    const result = await window.electronAPI.getGlobalSkillDir();
+    const actualDir = result.path;
+    
     // 设置内容
     modalSkillName.textContent = '检查更新';
-    modalInstallType.textContent = isGlobalInstall ? '全局' : '项目';
-    
-    // 处理安装目录显示
-    let actualDir = installDir || '全局';
-    if (isGlobalInstall) {
-      const result = await window.electronAPI.getGlobalSkillDir();
-      actualDir = result.path;
-    }
-    
+    modalInstallType.textContent = '全局';
     modalInstallDir.textContent = actualDir;
     
-    // 显示/隐藏打开目录图标
-    if (actualDir && actualDir !== '全局') {
-      openDirIcon.style.display = 'inline';
-      openDirIcon.onclick = async () => {
-        await window.electronAPI.openDirectory(actualDir);
-      };
-    } else {
-      openDirIcon.style.display = 'none';
-    }
+    // 显示打开目录图标
+    openDirIcon.style.display = 'inline';
+    openDirIcon.onclick = async () => {
+      await window.electronAPI.openDirectory(actualDir);
+    };
     
     // 重置状态
     modalStatus.className = 'step-status info';
-    modalStatus.textContent = '正在检查 Skill 更新……';
+    modalStatus.textContent = '正在检查全局 Skill 更新……';
     modalLog.textContent = `>> 检查目录: ${actualDir}\n>> 执行: npx skills check\n\n`;
     modalLog.classList.add('active');
     
@@ -1804,10 +1989,10 @@ function setupSkillsPage() {
     // 显示弹窗
     modal.style.display = 'flex';
 
-    // 执行检查
-    const result = await window.electronAPI.checkSkillUpdate(installDir);
+    // 执行检查（传递空字符串以使用全局目录）
+    const checkResult = await window.electronAPI.checkSkillUpdate('');
 
-    if (result.success) {
+    if (checkResult.success) {
       modalStatus.className = 'step-status success';
       modalStatus.textContent = '✓ 检查完成！';
       if (modalLog) {
@@ -1815,26 +2000,16 @@ function setupSkillsPage() {
       }
     } else {
       modalStatus.className = 'step-status error';
-      modalStatus.textContent = '✗ 检查失败: ' + result.error;
+      modalStatus.textContent = '✗ 检查失败: ' + checkResult.error;
     }
 
     // 启用关闭按钮
     closeBtn.disabled = false;
   });
 
-  // 升级 Skill
+  // 升级 Skill（仅全局）
   const upgradeSkillBtn = document.getElementById('upgrade-skill-btn');
   upgradeSkillBtn.addEventListener('click', async () => {
-    const installDir = skillInstallDir.value.trim();
-    const isGlobalInstall = document.getElementById('skill-global-install').checked;
-
-    // 如果不是全局安装，才检查安装目录
-    if (!isGlobalInstall && !installDir) {
-      showNotification('请先指定 Skill 安装目录', 'error');
-      skillInstallDir.focus();
-      return;
-    }
-
     // 显示弹窗
     const modal = document.getElementById('skill-install-modal');
     const modalSkillName = document.getElementById('modal-skill-name');
@@ -1845,32 +2020,24 @@ function setupSkillsPage() {
     const modalLog = document.getElementById('modal-install-log');
     const closeBtn = document.getElementById('close-install-modal');
     
+    // 获取全局 Skill 目录
+    const result = await window.electronAPI.getGlobalSkillDir();
+    const actualDir = result.path;
+    
     // 设置内容
     modalSkillName.textContent = '升级 Skill';
-    modalInstallType.textContent = isGlobalInstall ? '全局' : '项目';
-    
-    // 处理安装目录显示
-    let actualDir = installDir || '全局';
-    if (isGlobalInstall) {
-      const result = await window.electronAPI.getGlobalSkillDir();
-      actualDir = result.path;
-    }
-    
+    modalInstallType.textContent = '全局';
     modalInstallDir.textContent = actualDir;
     
-    // 显示/隐藏打开目录图标
-    if (actualDir && actualDir !== '全局') {
-      openDirIcon.style.display = 'inline';
-      openDirIcon.onclick = async () => {
-        await window.electronAPI.openDirectory(actualDir);
-      };
-    } else {
-      openDirIcon.style.display = 'none';
-    }
+    // 显示打开目录图标
+    openDirIcon.style.display = 'inline';
+    openDirIcon.onclick = async () => {
+      await window.electronAPI.openDirectory(actualDir);
+    };
     
     // 重置状态
     modalStatus.className = 'step-status info';
-    modalStatus.textContent = '正在升级 Skill……';
+    modalStatus.textContent = '正在升级全局 Skill……';
     modalLog.textContent = `>> 安装目录: ${actualDir}\n>> 执行: npx skills update\n\n`;
     modalLog.classList.add('active');
     
@@ -1880,10 +2047,10 @@ function setupSkillsPage() {
     // 显示弹窗
     modal.style.display = 'flex';
 
-    // 执行升级
-    const result = await window.electronAPI.upgradeSkill(installDir);
+    // 执行升级（传递空字符串以使用全局目录）
+    const upgradeResult = await window.electronAPI.upgradeSkill('');
 
-    if (result.success) {
+    if (upgradeResult.success) {
       modalStatus.className = 'step-status success';
       modalStatus.textContent = '✓ 升级完成！';
       if (modalLog) {
@@ -1891,7 +2058,7 @@ function setupSkillsPage() {
       }
     } else {
       modalStatus.className = 'step-status error';
-      modalStatus.textContent = '✗ 升级失败: ' + result.error;
+      modalStatus.textContent = '✗ 升级失败: ' + upgradeResult.error;
     }
 
     // 启用关闭按钮
@@ -2030,6 +2197,9 @@ function setupSkillsPage() {
               const modalLog = document.getElementById('modal-install-log');
               if (modalLog) {
                 modalLog.textContent += '\n>> 安装成功！';
+                requestAnimationFrame(() => {
+                  modalLog.scrollTop = modalLog.scrollHeight;
+                });
               }
             } else {
               modalStatus.className = 'step-status error';
@@ -2062,6 +2232,9 @@ function setupSkillsPage() {
               const modalLog = document.getElementById('modal-install-log');
               if (modalLog) {
                 modalLog.textContent += '\n>> 安装成功！';
+                requestAnimationFrame(() => {
+                  modalLog.scrollTop = modalLog.scrollHeight;
+                });
               }
             } else {
               modalStatus.className = 'step-status error';
@@ -2089,6 +2262,7 @@ function setupSkillsPage() {
 
   // 分析可用 Skill
   const analyzeSkillsBtn = document.getElementById('analyze-skills-btn');
+  const analyzeSkillInput = document.getElementById('analyze-skill-input');
   const skillAnalyzeResultsBody = document.getElementById('skill-analyze-results-body');
   const skillAnalyzeStatus = document.getElementById('skill-analyze-status');
 
@@ -2101,9 +2275,11 @@ function setupSkillsPage() {
     }
     
     // 显示加载中
-    skillAnalyzeResultsBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #858585;"><i class="fas fa-spinner fa-spin"></i> 分析中……</td></tr>';
+    skillAnalyzeResultsBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #858585;"><i class="fas fa-spinner fa-spin"></i> 分析中……</td></tr>';
 
-    const result = await window.electronAPI.analyzeSkills();
+    // 获取输入框的值
+    const repoPath = analyzeSkillInput.value.trim();
+    const result = await window.electronAPI.analyzeSkills(repoPath);
 
     if (result.success) {
       if (skillAnalyzeStatus) {
@@ -2116,63 +2292,161 @@ function setupSkillsPage() {
         skillAnalyzeResultsBody.innerHTML = result.skills.map(skill => `
           <tr>
             <td style="font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 12px;">${skill.name || 'N/A'}</td>
-            <td style="font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 12px;">${skill.version || 'N/A'}</td>
-            <td style="font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 11px;" title="${skill.path || 'N/A'}">${skill.path || 'N/A'}</td>
+            <td style="font-size: 12px;">${skill.description || 'N/A'}</td>
             <td>
               <div class="action-buttons">
-                <button class="btn-link btn-copy-skill-path" data-skill-path="${skill.path}" title="复制路径"><i class="fas fa-copy"></i></button>
-                <button class="btn-link btn-open-skill-dir" data-skill-path="${skill.path}" title="打开目录"><i class="fas fa-folder-open"></i></button>
+                <button class="btn-link btn-copy-skill-name" data-skill-name="${skill.name}" title="复制名称"><i class="fas fa-copy"></i></button>
+                <button class="btn-link btn-install-skill" data-skill-name="${skill.name}" title="项目安装"><i class="fas fa-folder"></i></button>
+                <button class="btn-link btn-install-skill-global" data-skill-name="${skill.name}" title="全局安装"><i class="fas fa-globe"></i></button>
               </div>
             </td>
           </tr>
         `).join('');
         
-        // 绑定复制路径按钮事件
-        document.querySelectorAll('.btn-copy-skill-path').forEach(btn => {
+        // 绑定项目安装按钮事件
+        document.querySelectorAll('.btn-install-skill').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const skillName = btn.dataset.skillName;
+            const repoPath = analyzeSkillInput.value.trim();
+            
+            if (!repoPath) {
+              showNotification('请先输入仓库地址', 'error');
+              return;
+            }
+            
+            // 检查 Skills 项目目录是否已选择
+            const skillInstallDir = document.getElementById('skill-install-dir');
+            const installDir = skillInstallDir ? skillInstallDir.value.trim() : '';
+            
+            if (!installDir) {
+              showNotification('请先在页面顶部选择 Skills 项目目录', 'error');
+              skillInstallDir?.focus();
+              return;
+            }
+            
+            // 显示进度弹窗
+            await showSkillInstallModal(skillName, '项目安装', installDir);
+            
+            // 执行安装，传入安装目录
+            const installResult = await window.electronAPI.installSkillFromList(repoPath, skillName, false, installDir);
+            
+            const modalStatus = document.getElementById('modal-install-status');
+            const modalLog = document.getElementById('modal-install-log');
+            const closeBtn = document.getElementById('close-install-modal');
+            
+            if (modalLog) {
+              if (installResult.success) {
+                modalStatus.className = 'step-status success';
+                modalStatus.textContent = `✓ Skill "${skillName}" 安装成功`;
+                modalLog.textContent += '\n>> 安装完成！';
+                requestAnimationFrame(() => {
+                  modalLog.scrollTop = modalLog.scrollHeight;
+                });
+              } else {
+                modalStatus.className = 'step-status error';
+                modalStatus.textContent = `✗ 安装失败: ${installResult.error}`;
+              }
+            }
+            
+            // 启用关闭按钮
+            if (closeBtn) {
+              closeBtn.disabled = false;
+            }
+          });
+        });
+        
+        // 绑定全局安装按钮事件
+        document.querySelectorAll('.btn-install-skill-global').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const skillName = btn.dataset.skillName;
+            const repoPath = analyzeSkillInput.value.trim();
+            
+            if (!repoPath) {
+              showNotification('请先输入仓库地址', 'error');
+              return;
+            }
+            
+            // 显示进度弹窗（全局安装不需要指定目录）
+            await showSkillInstallModal(skillName, '全局安装', '');
+            
+            // 执行全局安装
+            const installResult = await window.electronAPI.installSkillFromList(repoPath, skillName, true, null);
+            
+            const modalStatus = document.getElementById('modal-install-status');
+            const modalLog = document.getElementById('modal-install-log');
+            const closeBtn = document.getElementById('close-install-modal');
+            
+            if (modalLog) {
+              if (installResult.success) {
+                modalStatus.className = 'step-status success';
+                modalStatus.textContent = `✓ Skill "${skillName}" 全局安装成功`;
+                modalLog.textContent += '\n>> 安装完成！';
+                requestAnimationFrame(() => {
+                  modalLog.scrollTop = modalLog.scrollHeight;
+                });
+              } else {
+                modalStatus.className = 'step-status error';
+                modalStatus.textContent = `✗ 安装失败: ${installResult.error}`;
+              }
+            }
+            
+            // 启用关闭按钮
+            if (closeBtn) {
+              closeBtn.disabled = false;
+            }
+          });
+        });
+        
+        // 绑定复制名称按钮事件
+        document.querySelectorAll('.btn-copy-skill-name').forEach(btn => {
           btn.addEventListener('click', () => {
-            const skillPath = btn.dataset.skillPath;
+            const skillName = btn.dataset.skillName;
             const originalIcon = btn.innerHTML;
             
-            navigator.clipboard.writeText(skillPath).then(() => {
+            navigator.clipboard.writeText(skillName).then(() => {
               // 改变按钮图标为对勾
               btn.innerHTML = '<i class="fas fa-check"></i>';
               btn.style.color = '#4ec9b0';
               
-              // 2秒后恢复
+              // 创建提示文字
+              const tooltip = document.createElement('span');
+              tooltip.className = 'copy-tooltip';
+              tooltip.textContent = `已复制: ${skillName}`;
+              
+              // 计算按钮位置
+              const rect = btn.getBoundingClientRect();
+              tooltip.style.top = (rect.top - 35) + 'px';
+              tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+              tooltip.style.transform = 'translateX(-50%)';
+              
+              document.body.appendChild(tooltip);
+              
+              // 1秒后恢复原状
               setTimeout(() => {
                 btn.innerHTML = originalIcon;
+                // 禁用过渡效果，直接恢复颜色
+                btn.style.transition = 'none';
                 btn.style.color = '';
-              }, 2000);
+                // 强制重排后恢复过渡效果
+                btn.offsetHeight; // trigger reflow
+                btn.style.transition = '';
+                tooltip.remove();
+              }, 1000);
             }).catch(err => {
               console.error('复制失败:', err);
               showNotification('复制失败', 'error');
             });
           });
         });
-        
-        // 绑定打开目录按钮事件
-        document.querySelectorAll('.btn-open-skill-dir').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const skillPath = btn.dataset.skillPath;
-            if (skillPath && skillPath !== 'N/A') {
-              const result = await window.electronAPI.openDirectory(skillPath);
-              if (result.success) {
-                showNotification('已打开目录', 'success');
-              } else {
-                showNotification('打开目录失败: ' + result.error, 'error');
-              }
-            }
-          });
-        });
       } else {
-        skillAnalyzeResultsBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #858585;">未找到可用的 Skill</td></tr>';
+        skillAnalyzeResultsBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #858585;">未找到可用的 Skill</td></tr>';
       }
     } else {
       if (skillAnalyzeStatus) {
         skillAnalyzeStatus.className = 'step-status error';
         skillAnalyzeStatus.textContent = '✗ 分析失败: ' + result.error;
       }
-      skillAnalyzeResultsBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #f48771;">分析失败: ${result.error}</td></tr>`;
+      skillAnalyzeResultsBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #f48771;">分析失败: ${result.error}</td></tr>`;
     }
 
     analyzeSkillsBtn.disabled = false;

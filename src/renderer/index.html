@@ -9,6 +9,16 @@
 </head>
 <body>
   <div class="container">
+    <!-- 版本更新通知浮窗 -->
+    <div class="update-notification" id="update-notification" style="display: none;">
+      <i class="fas fa-arrow-circle-up"></i>
+      <div class="notification-content">
+        <div class="notification-title" id="update-notification-title">检测到 OpenCode 新版本 v1.0.0</div>
+        <div class="notification-subtitle">点击此前往运行环境页面更新</div>
+      </div>
+      <button class="close-notification" id="close-notification">&times;</button>
+    </div>
+
     <!-- 侧边栏 -->
     <nav class="sidebar">
       <div class="logo">
@@ -76,6 +86,7 @@
             <span>Skills 管理</span>
           </div>
           <ul class="nav-submenu">
+            <li class="submenu-item" data-target="skills-project-dir">项目目录</li>
             <li class="submenu-item" data-target="skills-search">Skills 查询</li>
             <li class="submenu-item" data-target="skills-install">Skills 安装</li>
           </ul>
@@ -247,7 +258,7 @@
           <div class="setup-step" id="config-auth">
             <div class="step-header">
               <span class="step-number"><i class="fas fa-key"></i></span>
-              <h3>鉴权文件(auth.json)</h3>
+              <h3>鉴权文件（auth.json）</h3>
             </div>
             <p>为 OpenCode 生成默认鉴权文件,存储在 <code>~/.local/share/opencode/auth.json</code></p>
             <div style="display: flex; gap: 10px;">
@@ -437,6 +448,16 @@
           <p class="subtitle">精品及定制化 Skills 管理和扩展</p>
         </div>
 
+        <!-- Skills 项目目录模块 -->
+        <div class="work-dir-section" id="skills-project-dir">
+          <h3><i class="fas fa-folder-open"></i> Skills 项目目录</h3>
+          <div class="input-group">
+            <input type="text" id="skill-install-dir" placeholder="请选择或输入 Skills 安装目录">
+            <button class="btn btn-primary" id="select-skill-dir-btn">选择目录</button>
+          </div>
+          <p class="input-hint"><i class="fas fa-lightbulb"></i> 可点击按钮选择，同时支持手动输入路径或拖拽上传</p>
+        </div>
+
         <div class="setup-steps">
           <div class="setup-step" id="skills-search">
             <div class="step-header">
@@ -455,7 +476,7 @@
             
             <!-- 查询结果表格 -->
             <div id="skill-search-results">
-              <div class="model-table-container" style="max-height: 400px;">
+              <div class="skill-table-container">
                 <table class="model-table">
                   <thead>
                     <tr>
@@ -483,26 +504,26 @@
             <div class="skill-install-section">
               <h4 style="margin: 0 0 15px 0; font-size: 16px;">分析可用 Skill</h4>
               <div class="input-group">
-                <button class="btn btn-primary" id="analyze-skills-btn" style="width: 100%;">分析可用 Skill</button>
+                <input type="text" id="analyze-skill-input" placeholder="输入 GitHub 仓库地址或留空分析全部（例如：owner/repo）">
+                <button class="btn btn-primary" id="analyze-skills-btn">分析 Skill</button>
               </div>
-              <p class="input-hint"><i class="fas fa-info-circle"></i> 执行 npx skills list 命令分析当前环境可用的 Skills</p>
+              <p class="input-hint"><i class="fas fa-info-circle"></i> 执行 npx skills add &lt;输入内容&gt; --list 命令分析可用的 Skills，留空则执行 npx skills list</p>
             </div>
 
             <!-- 分析结果表格 -->
             <div id="skill-analyze-results">
-              <div class="model-table-container" style="max-height: 400px;">
-                <table class="model-table">
+              <div class="skill-table-container">
+                <table class="model-table skill-analyze-table">
                   <thead>
                     <tr>
                       <th>Skill 名称</th>
-                      <th>版本</th>
-                      <th>路径</th>
+                      <th>Skill 描述</th>
                       <th>操作</th>
                     </tr>
                   </thead>
                   <tbody id="skill-analyze-results-body">
                     <tr>
-                      <td colspan="4" style="text-align: center; color: #858585;">暂无分析结果</td>
+                      <td colspan="3" style="text-align: center; color: #858585;">暂无分析结果</td>
                     </tr>
                   </tbody>
                 </table>
@@ -517,20 +538,9 @@
               <span class="step-number"><i class="fa-solid fa-download"></i></span>
               <h3>Skills 安装</h3>
             </div>
-            <p>安装 Skills 扩展到指定目录</p>
             
-            <!-- 第一行：目标安装目录 -->
-            <div class="skill-install-section">
-              <h4 style="font-size: 14px; color: #cccccc; margin-bottom: 10px;">目标安装目录</h4>
-              <div class="input-group">
-                <input type="text" id="skill-install-dir" placeholder="请选择或输入 Skills 安装目录">
-                <button class="btn btn-primary" id="select-skill-dir-btn">选择目录</button>
-              </div>
-              <p class="input-hint"><i class="fas fa-lightbulb"></i> 可点击按钮选择，同时支持手动输入路径或拖拽上传</p>
-            </div>
-
-            <!-- 第二行：Skill 安装地址 -->
-            <div class="skill-install-section" style="margin-top: 5px;">
+            <!-- Skill 安装地址 -->
+            <div class="skill-install-section" style="padding-top: 5px;">
               <div style="display: flex; align-items: center; margin-bottom: 10px; gap: 20px;">
                 <h4 style="font-size: 14px; color: #cccccc; margin: 0;">Skill 安装地址</h4>
                 <!-- 全局安装滑动按钮 -->
@@ -555,6 +565,7 @@
                   <i class="fas fa-arrow-up"></i> 升级 Skill
                 </button>
               </div>
+              <p class="input-hint" style="margin-top: 8px;"><i class="fas fa-info-circle"></i> 注：以上两个按钮仅用于检查和升级全局安装的 Skill，不需要指定 Skills 项目目录</p>
             </div>
 
             <div class="step-status" id="skill-install-status"></div>
