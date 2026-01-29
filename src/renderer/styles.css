@@ -372,6 +372,7 @@ body {
 
 .main-content::-webkit-scrollbar-track {
   background: transparent;
+  margin-top: 50px;
 }
 
 .main-content::-webkit-scrollbar-thumb {
@@ -382,6 +383,7 @@ body {
 
 .main-content:hover::-webkit-scrollbar-track {
   background: #1e1e1e;
+  margin-top: 50px;
 }
 
 .main-content:hover::-webkit-scrollbar-thumb,
@@ -1673,4 +1675,69 @@ body {
   font-size: 12px;
   line-height: 1.6;
   color: #cccccc;
+  font-weight: normal;
+}
+
+/* Skill 提示信息表格样式 */
+.skill-help-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #cccccc;
+  font-weight: normal;
+  border: 1px solid #3c3c3c;
+}
+
+/* 表头样式：居中显示 */
+.skill-help-table thead th {
+  text-align: center;
+  padding: 6px 8px;
+  border: 1px solid #3c3c3c;
+  color: #cccccc;
+  font-weight: normal;
+  background: rgba(255, 255, 255, 0.03);
+  vertical-align: middle;
+}
+
+/* 表体样式 */
+.skill-help-table tbody tr {
+  border: none;
+  transition: background-color 0.15s ease;
+}
+
+/* 行悬停效果 */
+.skill-help-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* 所有单元格通用样式 */
+.skill-help-table td {
+  padding: 6px 8px;
+  border: 1px solid #3c3c3c;
+  vertical-align: middle;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+  text-align: left;
+  color: #cccccc;
+  font-weight: normal;
+}
+
+/* 第一列：序号列（居中，10%宽度） */
+.skill-help-table td:first-child {
+  width: 10%;
+  text-align: center;
+}
+
+/* 第二列：类型列（30%宽度，水平居中） */
+.skill-help-table td:nth-child(2) {
+  width: 30%;
+  text-align: center;
+}
+
+/* 第三列：示例列（60%宽度） */
+.skill-help-table td:nth-child(3) {
+  width: 60%;
 }

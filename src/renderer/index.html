@@ -518,12 +518,47 @@
                   <div class="skill-tooltip">
                     <div class="skill-tooltip-content">
                       <p style="margin: 0 0 8px 0;">输入框中支持输入以下内容：</p>
-                      <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">1. GitHub shorthand ，格式为 owner/repo，例如 vercel-labs/agent-skills</p>
-                      <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">2. GitHub URL，例如 https://github.com/vercel-labs/agent-skills</p>
-                      <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">3. GitHub repo，例如 https://github.com/vercel-labs/agent-skills/tree/main/skills/frontend-design</p>
-                      <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">4. GitLab URL，例如 https://gitlab.com/org/repo</p>
-                      <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">5. 任何 git URL，例如 git@github.com:vercel-labs/agent-skills.git</p>
-                      <p style="margin: 0; padding-left: 1em; text-indent: -1em;">6. 本地文件路径，例如 my-local-skills</p>
+                      <table class="skill-help-table">
+                        <thead>
+                          <tr>
+                            <th>序号</th>
+                            <th>类型</th>
+                            <th>示例</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>1</td>
+                            <td>GitHub shorthand</td>
+                            <td>vercel-labs/agent-skills</td>
+                          </tr>
+                          <tr>
+                            <td>2</td>
+                            <td>GitHub URL</td>
+                            <td>https://github.com/vercel-labs/agent-skills</td>
+                          </tr>
+                          <tr>
+                            <td>3</td>
+                            <td>GitHub repo</td>
+                            <td>https://github.com/vercel-labs/agent-skills/tree/main/skills/frontend-design</td>
+                          </tr>
+                          <tr>
+                            <td>4</td>
+                            <td>GitLab URL</td>
+                            <td>https://gitlab.com/org/repo</td>
+                          </tr>
+                          <tr>
+                            <td>5</td>
+                            <td>任何 git URL</td>
+                            <td>git@github.com:vercel-labs/agent-skills.git</td>
+                          </tr>
+                          <tr>
+                            <td>6</td>
+                            <td>本地文件路径</td>
+                            <td>MacOS: /Users/my-local-skills <br> Windows: C:\\Users\\my-local-skills</td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </span>
@@ -573,12 +608,47 @@
                     <div class="skill-tooltip">
                       <div class="skill-tooltip-content">
                         <p style="margin: 0 0 8px 0;">输入框中支持输入以下内容：</p>
-                        <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">1. GitHub shorthand ，格式为 owner/repo，例如 vercel-labs/agent-skills</p>
-                        <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">2. GitHub URL，例如 https://github.com/vercel-labs/agent-skills</p>
-                        <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">3. GitHub repo，例如 https://github.com/vercel-labs/agent-skills/tree/main/skills/frontend-design</p>
-                        <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">4. GitLab URL，例如 https://gitlab.com/org/repo</p>
-                        <p style="margin: 0 0 6px 0; padding-left: 1em; text-indent: -1em;">5. 任何 git URL，例如 git@github.com:vercel-labs/agent-skills.git</p>
-                        <p style="margin: 0;">6. 本地文件路径，例如 my-local-skills</p>
+                        <table class="skill-help-table">
+                          <thead>
+                            <tr>
+                              <th>序号</th>
+                              <th>类型</th>
+                              <th>示例</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>1</td>
+                              <td>GitHub shorthand</td>
+                              <td>vercel-labs/agent-skills</td>
+                            </tr>
+                            <tr>
+                              <td>2</td>
+                              <td>GitHub URL</td>
+                              <td>https://github.com/vercel-labs/agent-skills</td>
+                            </tr>
+                            <tr>
+                              <td>3</td>
+                              <td>GitHub repo</td>
+                              <td>https://github.com/vercel-labs/agent-skills/tree/main/skills/frontend-design</td>
+                            </tr>
+                            <tr>
+                              <td>4</td>
+                              <td>GitLab URL</td>
+                              <td>https://gitlab.com/org/repo</td>
+                            </tr>
+                            <tr>
+                              <td>5</td>
+                              <td>任何 git URL</td>
+                              <td>git@github.com:vercel-labs/agent-skills.git</td>
+                            </tr>
+                            <tr>
+                              <td>6</td>
+                              <td>本地文件路径</td>
+                              <td>MacOS: /Users/my-local-skills <br> Windows: C:\\Users\\my-local-skills</td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </span>
@@ -598,10 +668,10 @@
               <!-- Skills 管理功能按钮 -->
               <div style="margin-top: 15px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
                 <button class="btn btn-secondary btn-small" id="check-skill-update-btn">
-                  <i class="fas fa-sync-alt"></i> 检查 Skill 更新
+                  <i class="fa fa-arrows-rotate"></i> 检查全局 Skill 更新
                 </button>
                 <button class="btn btn-secondary btn-small" id="upgrade-skill-btn">
-                  <i class="fas fa-arrow-up"></i> 升级 Skill
+                  <i class="fa fa-circle-arrow-up"></i> 升级全局 Skill
                 </button>
               </div>
             </div>
