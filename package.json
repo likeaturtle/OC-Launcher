@@ -1,6 +1,6 @@
 {
   "name": "opencode-launcher",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "OpenCode Launcher - Standalone OpenCode environment manager",
   "main": "src/main/index.js",
   "scripts": {
@@ -52,6 +52,7 @@
     "files": [
       "src/**/*",
       "opencode.json.example",
+      "auth.json.example",
       "package.json"
     ],
     "mac": {
@@ -64,6 +65,14 @@
         {
           "from": "nodejs_package/node-v22.22.0-darwin-${arch}.tar.gz",
           "to": "nodejs_package"
+        },
+        {
+          "from": "auth.json.example",
+          "to": "auth.json.example"
+        },
+        {
+          "from": "opencode.json.example",
+          "to": "opencode.json.example"
         }
       ]
     },
@@ -77,6 +86,14 @@
         {
           "from": "nodejs_package/node-v22.22.0-win-${arch}.zip",
           "to": "nodejs_package"
+        },
+        {
+          "from": "auth.json.example",
+          "to": "auth.json.example"
+        },
+        {
+          "from": "opencode.json.example",
+          "to": "opencode.json.example"
         }
       ]
     },

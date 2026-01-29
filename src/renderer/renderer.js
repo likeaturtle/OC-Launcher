@@ -608,7 +608,7 @@ document.getElementById('configure-npm-btn').addEventListener('click', async () 
   }
   
   btn.disabled = false;
-  btn.textContent = '设置 npm 源';
+  btn.textContent = '设置 NPM 源';
 });
 
 // 安装 OpenCode
@@ -817,7 +817,7 @@ document.getElementById('generate-config-btn').addEventListener('click', async (
     status.className = 'step-status success';
     status.textContent = `✓ 配置文件已生成：${result.path}`;
     btn.disabled = false;
-    btn.textContent = '生成默认配置';
+    btn.textContent = '生成默认配置文件';
   } else if (result.fileExists) {
     // 配置文件已存在，询问用户是否覆盖
     const confirmText = '配置文件已存在，继续操作将对已有配置文件进行覆盖，该操作不可撤销，是否继续？';
@@ -843,12 +843,12 @@ document.getElementById('generate-config-btn').addEventListener('click', async (
     }
     
     btn.disabled = false;
-    btn.textContent = '生成默认配置';
+    btn.textContent = '生成默认配置文件';
   } else {
     status.className = 'step-status error';
     status.textContent = '✗ 生成失败: ' + result.error;
     btn.disabled = false;
-    btn.textContent = '生成默认配置';
+    btn.textContent = '生成默认配置文件';
   }
 });
 
@@ -1786,7 +1786,7 @@ function setupSkillsPage() {
     if (platform.includes('mac')) {
       globalInstallPath = '~/.config/opencode/skills';
     } else if (platform.includes('win')) {
-      globalInstallPath = '%USERPROFILE%\\.config\\opencode\\skills';
+      globalInstallPath = '%APPDATA%\\opencode\\skills';
     } else {
       globalInstallPath = '~/.config/opencode/skills';
     }
@@ -2291,7 +2291,7 @@ function setupSkillsPage() {
     }
 
     searchSkillBtn.disabled = false;
-    searchSkillBtn.innerHTML = '查询';
+    searchSkillBtn.innerHTML = '查询 Skill';
   });
 
   // 分析可用 Skill
@@ -2484,7 +2484,7 @@ function setupSkillsPage() {
     }
 
     analyzeSkillsBtn.disabled = false;
-    analyzeSkillsBtn.innerHTML = '分析可用 Skill';
+    analyzeSkillsBtn.innerHTML = '分析 Skill';
   });
 
   // 支持拖拽目录到安装目录选择区域

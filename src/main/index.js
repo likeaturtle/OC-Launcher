@@ -673,8 +673,11 @@ function createWindow() {
 }
 
 function setupConfigWatcher() {
-  const configPath = path.join(os.homedir(), '.config', 'opencode', 'opencode.json');
-  const configDir = path.dirname(configPath);
+  // 跨平台配置路径
+  const configDir = process.platform === 'win32'
+    ? path.join(process.env.APPDATA, 'opencode')
+    : path.join(os.homedir(), '.config', 'opencode');
+  const configPath = path.join(configDir, 'opencode.json');
 
   if (configWatcher) {
     configWatcher.close();
@@ -1052,7 +1055,10 @@ ipcMain.handle('reset-environment', async () => {
 
 ipcMain.handle('generate-opencode-config', async (event, { force = false } = {}) => {
   try {
-    const opencodeConfigDir = path.join(os.homedir(), '.config', 'opencode');
+    // 跨平台配置路径
+    const opencodeConfigDir = process.platform === 'win32'
+      ? path.join(process.env.APPDATA, 'opencode')
+      : path.join(os.homedir(), '.config', 'opencode');
     const opencodeConfigPath = path.join(opencodeConfigDir, 'opencode.json');
     
     // 检查配置文件是否已存在
@@ -1064,18 +1070,26 @@ ipcMain.handle('generate-opencode-config', async (event, { force = false } = {})
       };
     }
     
-    // 创建 .config/opencode 目录（如果不存在）
+    // 创建配置目录（如果不存在）
     if (!fs.existsSync(opencodeConfigDir)) {
       fs.mkdirSync(opencodeConfigDir, { recursive: true });
     }
     
     // 读取模板文件
-    const templatePath = path.join(app.getAppPath(), 'opencode.json.example');
+    // 开发环境和打包环境的模板路径不同
+    let templatePath;
+    if (app.isPackaged) {
+      // 打包后从资源目录读取
+      templatePath = path.join(process.resourcesPath, 'opencode.json.example');
+    } else {
+      // 开发环境从项目根目录读取
+      templatePath = path.join(__dirname, '../../opencode.json.example');
+    }
     
     if (!fs.existsSync(templatePath)) {
       return {
         success: false,
-        error: '配置模板文件不存在'
+        error: '配置模板文件不存在: ' + templatePath
       };
     }
     
@@ -1097,7 +1111,11 @@ ipcMain.handle('generate-opencode-config', async (event, { force = false } = {})
 
 ipcMain.handle('get-opencode-config', async () => {
   try {
-    const opencodeConfigPath = path.join(os.homedir(), '.config', 'opencode', 'opencode.json');
+    // 跨平台配置路径
+    const opencodeConfigDir = process.platform === 'win32'
+      ? path.join(process.env.APPDATA, 'opencode')
+      : path.join(os.homedir(), '.config', 'opencode');
+    const opencodeConfigPath = path.join(opencodeConfigDir, 'opencode.json');
     if (fs.existsSync(opencodeConfigPath)) {
       const content = fs.readFileSync(opencodeConfigPath, 'utf8');
       return { success: true, config: JSON.parse(content) };
@@ -1110,7 +1128,11 @@ ipcMain.handle('get-opencode-config', async () => {
 
 ipcMain.handle('save-opencode-config', async (event, config) => {
   try {
-    const opencodeConfigPath = path.join(os.homedir(), '.config', 'opencode', 'opencode.json');
+    // 跨平台配置路径
+    const opencodeConfigDir = process.platform === 'win32'
+      ? path.join(process.env.APPDATA, 'opencode')
+      : path.join(os.homedir(), '.config', 'opencode');
+    const opencodeConfigPath = path.join(opencodeConfigDir, 'opencode.json');
     fs.writeFileSync(opencodeConfigPath, JSON.stringify(config, null, 2), 'utf8');
     return { success: true };
   } catch (error) {
@@ -1120,8 +1142,11 @@ ipcMain.handle('save-opencode-config', async (event, config) => {
 
 ipcMain.handle('save-opencode-auth', async (event, apiKey) => {
   try {
-    const authPath = path.join(os.homedir(), '.local', 'share', 'opencode', 'auth.json');
-    const authDir = path.dirname(authPath);
+    // 跨平台认证文件路径
+    const authDir = process.platform === 'win32'
+      ? path.join(process.env.LOCALAPPDATA, 'opencode')
+      : path.join(os.homedir(), '.local', 'share', 'opencode');
+    const authPath = path.join(authDir, 'auth.json');
 
     if (!fs.existsSync(authDir)) {
       fs.mkdirSync(authDir, { recursive: true });
@@ -1151,7 +1176,11 @@ ipcMain.handle('save-opencode-auth', async (event, apiKey) => {
 
 ipcMain.handle('get-opencode-auth', async () => {
   try {
-    const authPath = path.join(os.homedir(), '.local', 'share', 'opencode', 'auth.json');
+    // 跨平台认证文件路径
+    const authDir = process.platform === 'win32'
+      ? path.join(process.env.LOCALAPPDATA, 'opencode')
+      : path.join(os.homedir(), '.local', 'share', 'opencode');
+    const authPath = path.join(authDir, 'auth.json');
     if (fs.existsSync(authPath)) {
       const content = fs.readFileSync(authPath, 'utf8');
       const authConfig = JSON.parse(content);
@@ -1232,7 +1261,10 @@ ipcMain.handle('get-zen-models', async () => {
 
 ipcMain.handle('open-config-directory', async () => {
   try {
-    const configDir = path.join(os.homedir(), '.config', 'opencode');
+    // 跨平台配置目录
+    const configDir = process.platform === 'win32'
+      ? path.join(process.env.APPDATA, 'opencode')
+      : path.join(os.homedir(), '.config', 'opencode');
     
     // 确保目录存在
     if (!fs.existsSync(configDir)) {
@@ -1269,12 +1301,20 @@ ipcMain.handle('generate-auth-file', async (event, { force = false } = {}) => {
     }
     
     // 读取模板文件
-    const templatePath = path.join(app.getAppPath(), 'auth.json.example');
+    // 开发环境和打包环境的模板路径不同
+    let templatePath;
+    if (app.isPackaged) {
+      // 打包后从资源目录读取
+      templatePath = path.join(process.resourcesPath, 'auth.json.example');
+    } else {
+      // 开发环境从项目根目录读取
+      templatePath = path.join(__dirname, '../../auth.json.example');
+    }
     
     if (!fs.existsSync(templatePath)) {
       return {
         success: false,
-        error: '鉴权模板文件不存在'
+        error: '鉴权模板文件不存在: ' + templatePath
       };
     }
     
@@ -1315,7 +1355,10 @@ ipcMain.handle('open-auth-directory', async () => {
 
 // 获取全局 Skill 安装目录
 ipcMain.handle('get-global-skill-dir', () => {
-  const globalSkillDir = path.join(os.homedir(), '.config', 'opencode', 'skills');
+  // 跨平台 Skill 目录
+  const globalSkillDir = process.platform === 'win32'
+    ? path.join(process.env.APPDATA, 'opencode', 'skills')
+    : path.join(os.homedir(), '.config', 'opencode', 'skills');
   return { path: globalSkillDir };
 });
 
@@ -1345,11 +1388,11 @@ ipcMain.handle('open-global-skills-directory', async () => {
   }
 });
 
-// 打开 Skills for OpenCode 目录 (~/.config/opencode/skills)
+// 打开 Skills for OpenCode 目录 (跨平台)
 ipcMain.handle('open-opencode-skills-directory', async () => {
   try {
     const opencodeSkillsDir = process.platform === 'win32'
-      ? path.join(os.homedir(), '.config', 'opencode', 'skills')
+      ? path.join(process.env.APPDATA, 'opencode', 'skills')
       : path.join(os.homedir(), '.config', 'opencode', 'skills');
     
     // 检查目录是否存在,如果不存在则创建
