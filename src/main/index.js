@@ -236,6 +236,59 @@ function ensureNodejsPermissions() {
   }
 }
 
+// 创建独立的环境变量（不继承系统环境）
+function createIsolatedEnv() {
+  const { nodeBinPath } = getNodeExecutionPaths();
+  
+  // 最小化环境变量集合，不继承系统环境
+  const env = {
+    // 仅保留必要的系统路径变量
+    HOME: os.homedir(),
+    USERPROFILE: os.homedir(), // Windows
+    TMPDIR: os.tmpdir(),
+    TEMP: os.tmpdir(), // Windows
+    TMP: os.tmpdir(), // Windows
+    
+    // 设置独立的 Node.js 和 npm 环境
+    PREFIX: NODEJS_PATH,
+    NPM_CONFIG_PREFIX: NODEJS_PATH,
+    NPM_CONFIG_GLOBALCONFIG: path.join(NODEJS_PATH, 'etc', 'npmrc'),
+    NPM_CONFIG_USERCONFIG: path.join(app.getPath('userData'), '.npmrc'),
+    NODE_PATH: path.join(NODEJS_PATH, 'lib', 'node_modules'),
+    
+    // 使用新的 npm install 策略（替代已废弃的 global-style）
+    NPM_CONFIG_INSTALL_STRATEGY: 'shallow',
+    NPM_CONFIG_LEGACY_PEER_DEPS: 'false'
+  };
+  
+  // 设置 PATH：项目 Node.js + 必要的系统路径
+  if (process.platform === 'win32') {
+    // Windows: 添加系统必要路径
+    env.SYSTEMROOT = process.env.SYSTEMROOT || 'C:\\Windows';
+    env.WINDIR = process.env.WINDIR || 'C:\\Windows';
+    const systemPaths = [
+      nodeBinPath,
+      path.join(env.SYSTEMROOT, 'System32'),
+      path.join(env.SYSTEMROOT, 'System32', 'WindowsPowerShell', 'v1.0')
+    ];
+    env.PATH = systemPaths.join(path.delimiter);
+    env.Path = env.PATH;
+  } else {
+    // macOS/Linux: 添加必要的系统路径（用于 sh、git 等基本命令）
+    const systemPaths = [
+      nodeBinPath,
+      '/usr/local/bin',
+      '/usr/bin',
+      '/bin',
+      '/usr/sbin',
+      '/sbin'
+    ];
+    env.PATH = systemPaths.join(path.delimiter);
+  }
+  
+  return env;
+}
+
 // 获取当前 npm 源配置
 function getNpmRegistry() {
   return new Promise((resolve, reject) => {
@@ -250,13 +303,8 @@ function getNpmRegistry() {
 
     ensureNodejsPermissions();
     
-    // 设置环境变量
-    const env = { ...process.env, PREFIX: NODEJS_PATH };
-    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
-    const currentPath = env[pathKey] || env.PATH || env.Path || '';
-    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
-    env.PATH = env[pathKey];
-    env.Path = env[pathKey];
+    // 使用独立环境变量
+    const env = createIsolatedEnv();
     
     const child = spawn(nodePath, [npmCliPath, 'config', 'get', 'registry'], { env });
     
@@ -300,13 +348,8 @@ function getLatestOpencodeVersion() {
 
     ensureNodejsPermissions();
     
-    // 设置环境变量
-    const env = { ...process.env, PREFIX: NODEJS_PATH };
-    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
-    const currentPath = env[pathKey] || env.PATH || env.Path || '';
-    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
-    env.PATH = env[pathKey];
-    env.Path = env[pathKey];
+    // 使用独立环境变量
+    const env = createIsolatedEnv();
     
     const child = spawn(nodePath, [npmCliPath, 'view', 'opencode-ai', 'version'], { env });
     
@@ -380,14 +423,8 @@ function configureNpmRegistry(registry) {
       mainWindow.webContents.send('install-progress', `[npm] 开始配置 npm 源: ${registry}\n`);
     }
 
-    // 设置环境变量
-    const env = { ...process.env, PREFIX: NODEJS_PATH };
-    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
-    const currentPath = env[pathKey] || env.PATH || env.Path || '';
-    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
-    // 确保 PATH 和 Path 同时存在（兼容性）
-    env.PATH = env[pathKey];
-    env.Path = env[pathKey];
+    // 使用独立环境变量
+    const env = createIsolatedEnv();
     
     // 直接使用 node 运行 npm-cli.js，绕过可能存在问题的 npm 脚本
     const child = spawn(nodePath, [npmCliPath, 'config', 'set', 'registry', registry], { env });
@@ -436,13 +473,8 @@ function installOpenCode(version) {
     ensureNodejsPermissions();
     const { nodePath, npmCliPath, nodeBinPath } = getNodeExecutionPaths();
 
-    // 设置环境变量
-    const env = { ...process.env };
-    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
-    const currentPath = env[pathKey] || env.PATH || env.Path || '';
-    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
-    env.PATH = env[pathKey];
-    env.Path = env[pathKey];
+    // 使用独立环境变量
+    const env = createIsolatedEnv();
     
     const packageName = version ? `opencode-ai@${version}` : 'opencode-ai';
     const child = spawn(nodePath, [npmCliPath, 'install', '-g', packageName, '--prefix', OPENCODE_PATH], {
@@ -481,12 +513,8 @@ function uninstallOpenCode() {
     ensureNodejsPermissions();
     const { nodePath, npmCliPath, nodeBinPath } = getNodeExecutionPaths();
 
-    const env = { ...process.env };
-    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
-    const currentPath = env[pathKey] || env.PATH || env.Path || '';
-    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
-    env.PATH = env[pathKey];
-    env.Path = env[pathKey];
+    // 使用独立环境变量
+    const env = createIsolatedEnv();
 
     const child = spawn(nodePath, [npmCliPath, 'uninstall', '-g', 'opencode-ai', '--prefix', OPENCODE_PATH], {
       env
@@ -717,7 +745,9 @@ ipcMain.handle('check-nodejs', async () => {
   let version = null;
   if (extracted) {
     try {
-      version = require('child_process').execSync(`"${nodePath}" -v`).toString().trim();
+      // 使用独立环境变量执行 node 命令
+      const env = createIsolatedEnv();
+      version = require('child_process').execSync(`"${nodePath}" -v`, { env }).toString().trim();
     } catch (e) {
       console.error('[Node.js] 获取版本号失败:', e);
     }
@@ -750,7 +780,9 @@ ipcMain.handle('check-npm', async () => {
     try {
       npmPath = path.join(nodeBinPath, process.platform === 'win32' ? 'npm.cmd' : 'npm');
       if (fs.existsSync(npmPath)) {
-        version = require('child_process').execSync(`"${npmPath}" -v`).toString().trim();
+        // 使用独立环境变量执行 npm 命令
+        const env = createIsolatedEnv();
+        version = require('child_process').execSync(`"${npmPath}" -v`, { env }).toString().trim();
       }
     } catch (e) {
       console.error('[npm] 获取版本号失败:', e);
@@ -766,7 +798,7 @@ ipcMain.handle('check-npm', async () => {
 
 ipcMain.handle('check-opencode', async () => {
   const config = initConfig();
-  // 严格检查 OpenCode 是否安装：配置标记为 true 且可执行文件存在
+  // 严格检查 OpenCode 是否安装:配置标记为 true 且可执行文件存在
   const opencodePath = path.join(OPENCODE_PATH, process.platform === 'win32' ? 'opencode.cmd' : 'bin/opencode');
   const installed = config.opencodeInstalled && fs.existsSync(opencodePath);
   
@@ -775,12 +807,8 @@ ipcMain.handle('check-opencode', async () => {
     try {
       const { nodeBinPath } = getNodeExecutionPaths();
       const childProcess = require('child_process');
-      const env = { ...process.env };
-      const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
-      const currentPath = env[pathKey] || env.PATH || env.Path || '';
-      env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
-      env.PATH = env[pathKey];
-      env.Path = env[pathKey];
+      // 使用独立环境变量
+      const env = createIsolatedEnv();
       // 直接执行 opencode，可同时兼容二进制和 JS 版本
       version = childProcess.execSync(`"${opencodePath}" -v`, { env }).toString().trim();
     } catch (e) {
@@ -816,12 +844,8 @@ ipcMain.handle('check-opencode-update', async () => {
     try {
       const { nodeBinPath } = getNodeExecutionPaths();
       const childProcess = require('child_process');
-      const env = { ...process.env };
-      const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
-      const currentPath = env[pathKey] || env.PATH || env.Path || '';
-      env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
-      env.PATH = env[pathKey];
-      env.Path = env[pathKey];
+      // 使用独立环境变量
+      const env = createIsolatedEnv();
       localVersion = childProcess.execSync(`"${opencodePath}" -v`, { env }).toString().trim();
     } catch (e) {
       console.error('[版本检查] 获取本地版本失败:', e);
@@ -1390,13 +1414,8 @@ ipcMain.handle('install-skill', async (event, installDir, skillUrl, isGlobal = f
     ensureNodejsPermissions();
     const { nodePath, nodeBinPath } = getNodeExecutionPaths();
 
-    // 设置环境变量
-    const env = { ...process.env };
-    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
-    const currentPath = env[pathKey] || env.PATH || env.Path || '';
-    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
-    env.PATH = env[pathKey];
-    env.Path = env[pathKey];
+    // 使用独立环境变量
+    const env = createIsolatedEnv();
     
     // 获取 npx 路径
     const npxPath = process.platform === 'win32' 
@@ -1489,13 +1508,8 @@ ipcMain.handle('install-skill-from-list', async (event, repoPath, skillName, isG
     ensureNodejsPermissions();
     const { nodePath, nodeBinPath } = getNodeExecutionPaths();
 
-    // 设置环境变量
-    const env = { ...process.env };
-    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
-    const currentPath = env[pathKey] || env.PATH || env.Path || '';
-    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
-    env.PATH = env[pathKey];
-    env.Path = env[pathKey];
+    // 使用独立环境变量
+    const env = createIsolatedEnv();
     
     // 获取 npx 路径
     const npxPath = process.platform === 'win32' 
@@ -1557,12 +1571,8 @@ ipcMain.handle('check-skill-update', async (event, installDir) => {
     ensureNodejsPermissions();
     const { nodePath, nodeBinPath } = getNodeExecutionPaths();
 
-    const env = { ...process.env };
-    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
-    const currentPath = env[pathKey] || env.PATH || env.Path || '';
-    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
-    env.PATH = env[pathKey];
-    env.Path = env[pathKey];
+    // 使用独立环境变量
+    const env = createIsolatedEnv();
     
     const npxPath = process.platform === 'win32' 
       ? path.join(NODEJS_PATH, 'npx.cmd')
@@ -1611,12 +1621,8 @@ ipcMain.handle('upgrade-skill', async (event, installDir) => {
     ensureNodejsPermissions();
     const { nodePath, nodeBinPath } = getNodeExecutionPaths();
 
-    const env = { ...process.env };
-    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
-    const currentPath = env[pathKey] || env.PATH || env.Path || '';
-    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
-    env.PATH = env[pathKey];
-    env.Path = env[pathKey];
+    // 使用独立环境变量
+    const env = createIsolatedEnv();
     
     const npxPath = process.platform === 'win32' 
       ? path.join(NODEJS_PATH, 'npx.cmd')
@@ -1665,12 +1671,8 @@ ipcMain.handle('search-skill', async (event, keyword) => {
     ensureNodejsPermissions();
     const { nodePath, nodeBinPath } = getNodeExecutionPaths();
 
-    const env = { ...process.env };
-    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
-    const currentPath = env[pathKey] || env.PATH || env.Path || '';
-    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
-    env.PATH = env[pathKey];
-    env.Path = env[pathKey];
+    // 使用独立环境变量
+    const env = createIsolatedEnv();
     
     const npxPath = process.platform === 'win32' 
       ? path.join(NODEJS_PATH, 'npx.cmd')
@@ -1727,12 +1729,8 @@ ipcMain.handle('analyze-skills', async (event, repoPath) => {
     ensureNodejsPermissions();
     const { nodePath, nodeBinPath } = getNodeExecutionPaths();
 
-    const env = { ...process.env };
-    const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
-    const currentPath = env[pathKey] || env.PATH || env.Path || '';
-    env[pathKey] = `${nodeBinPath}${path.delimiter}${currentPath}`;
-    env.PATH = env[pathKey];
-    env.Path = env[pathKey];
+    // 使用独立环境变量
+    const env = createIsolatedEnv();
     
     const npxPath = process.platform === 'win32' 
       ? path.join(NODEJS_PATH, 'npx.cmd')
